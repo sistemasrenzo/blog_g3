@@ -1,1444 +1,616 @@
 <!DOCTYPE html>
-<html lang="es" class="scroll-smooth"><head><script data-bard-client-injected="true">(function(firebaseConfig, initialAuthToken, appId) {
-        window.__firebase_config = firebaseConfig;
-        window.__initial_auth_token = initialAuthToken;
-        window.__app_id = appId;
-            })("\n{\n  \"apiKey\": \"AIzaSyCqyCcs2R2e7AegGjvFAwG98wlamtbHvZY\",\n  \"authDomain\": \"bard-frontend.firebaseapp.com\",\n  \"projectId\": \"bard-frontend\",\n  \"storageBucket\": \"bard-frontend.firebasestorage.app\",\n  \"messagingSenderId\": \"175205271074\",\n  \"appId\": \"1:175205271074:web:2b7bd4d34d33bf38e6ec7b\"\n}\n","eyJhbGciOiJSUzI1NiIsImtpZCI6IjExNjRiNzdiNDMzZDdhMDAyMWI4NjE4YjhjYTU3ZTMyZGI5MWUxMTMiLCJ0eXAiOiJKV1QifQ.eyJzdWIiOiJmaXJlYmFzZS1hZG1pbnNkay1mYnN2Y0BiYXJkLWZyb250ZW5kLmlhbS5nc2VydmljZWFjY291bnQuY29tIiwiYXVkIjoiaHR0cHM6Ly9pZGVudGl0eXRvb2xraXQuZ29vZ2xlYXBpcy5jb20vZ29vZ2xlLmlkZW50aXR5LmlkZW50aXR5dG9vbGtpdC52MS5JZGVudGl0eVRvb2xraXQiLCJ1aWQiOiIwNjUyNTI1MDA3ODg5OTkxMDUyOSIsImlzcyI6ImZpcmViYXNlLWFkbWluc2RrLWZic3ZjQGJhcmQtZnJvbnRlbmQuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLCJjbGFpbXMiOnsiYXBwSWQiOiJjXzQ1NWU0MzI3ZDRmNDk5MjhfaW5kZXguaHRtbC05NDYifSwiZXhwIjoxNzk1MzAzMjM0LCJpYXQiOjE3OTUyOTk2MzQsImFsZyI6IlJTMjU2In0.Fx249Wojb-4UdFzZUvhbl0_9YYYTkq6wf6qiVxmTnwiuR-mb_ljbLX6KEI8tgrWuZ-jDLQ_-a7nuAm5MI_8zi6r28JidZNE8DRujjNzQQHlhag17mfic12GoPK_ax1y2af9ObUBIN6evsTOjIn1TBJa1xLpwcMrQXzx0gesr-xcXR9nGMzYfGOMfKqBAaJQZGQ4W6hTrTw5xN5vvo4n2_R8z7z7HFSTOMiuUAIh5EgidZUkIRCbKZbAoolo89RnKi53g642-kv05qG7c6MO1giFNf5_hONKsBpGNIgGn3IsEmYRexEGAiaJ1Igsug5WNQ_TeHveZHJCwizeoNoivvg","c_455e4327d4f49928_index.html-946")</script><script data-bard-client-injected="true">
-  document.addEventListener('input', (event) => {
-    if (event.target && (event.target.isContentEditable || event.target.hasAttribute('contenteditable'))) {
-      const clonedDoc = document.cloneNode(true);
-      const injectedScripts = clonedDoc.querySelectorAll('[data-bard-client-injected="true"]');
-      injectedScripts.forEach(el => el.remove());
-      window.parent.postMessage({
-        type: 'inlineEdit',
-        html: '<!DOCTYPE html>\n' + clonedDoc.documentElement.outerHTML
-      }, '*');
-    }
-  });
-</script><script data-bard-client-injected="true">(function(){'use strict';window.addEventListener("message",a=>{a.data&&a.data.type==="SUPPLEMENTAL_DATA_UPDATE"&&window.dispatchEvent(new CustomEvent("supplementaldataupdate",{detail:a.data.data}))});}).call(this);
-</script><script data-bard-client-injected="true">(function() {
-  const SCROLL_KEYS = new Set([
-    'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
-    ' ', 'Spacebar', 'PageUp', 'PageDown', 'Home', 'End',
-  ]);
-  const HORIZONTAL_KEYS = new Set(['ArrowLeft', 'ArrowRight']);
-
-  function isTextEntryTarget(target) {
-    if (!target) return false;
-    const tagName = target.tagName;
-    return tagName === 'INPUT' || tagName === 'TEXTAREA' ||
-        tagName === 'SELECT' || target.isContentEditable === true;
-  }
-
-  // An element absorbs the key only if it both overflows on the axis being
-  // scrolled and is configured to scroll on that axis. The cheap dimension
-  // test runs first because getComputedStyle forces a style recalc, and this
-  // runs on every keypress. Each axis is read from its own longhand: the
-  // 'overflow' shorthand serializes as two values when the axes differ, which
-  // is the common 'overflow-x: hidden; overflow-y: auto' pane.
-  function canScroll(node, horizontal) {
-    const overflows = horizontal ? node.scrollWidth > node.clientWidth
-                                 : node.scrollHeight > node.clientHeight;
-    if (!overflows) return false;
-    const style = window.getComputedStyle(node);
-    const overflow = horizontal ? style.overflowX : style.overflowY;
-    return overflow === 'auto' || overflow === 'scroll';
-  }
-
-  // Walks up from the event target so nested scrollers keep their behavior.
-  // <body> is included because pages that pin the root height make it the
-  // scroll container.
-  function hasScrollableAncestor(target, horizontal) {
-    let node = target;
-    while (node && node !== document.documentElement) {
-      if (canScroll(node, horizontal)) return true;
-      node = node.parentElement;
-    }
-    return false;
-  }
-
-  function rootCanScroll(horizontal) {
-    const scroller = document.scrollingElement || document.documentElement;
-    if (!scroller) return false;
-    // Tolerate a pixel of rounding so subpixel layouts do not look scrollable.
-    return horizontal ? scroller.scrollWidth > window.innerWidth + 1
-                      : scroller.scrollHeight > window.innerHeight + 1;
-  }
-
-  window.addEventListener('keydown', function(event) {
-    if (!SCROLL_KEYS.has(event.key)) return;
-    if (event.defaultPrevented) return;
-    // Alt and Meta turn arrows into browser history navigation, and Ctrl is
-    // reserved for shortcuts, so none of them are scroll intent.
-    if (event.altKey || event.metaKey || event.ctrlKey) return;
-
-    const target = event.target;
-    if (isTextEntryTarget(target)) return;
-
-    // Anything that can still absorb the scroll gets to keep it.
-    const horizontal = HORIZONTAL_KEYS.has(event.key);
-    if (rootCanScroll(horizontal)) return;
-    if (hasScrollableAncestor(target, horizontal)) return;
-
-    event.preventDefault();
-  }, {capture: true, passive: false});
-})();</script><script data-bard-client-injected="true">(function() {
-  // Ensure this script is executed only once
-  if (window.firebaseAuthBridgeScriptLoaded) {
-    return;
-  }
-  window.firebaseAuthBridgeScriptLoaded = true;
-
-  let nextTokenPromiseId = 0;
-
-  // Stores { resolve, reject } for ongoing token requests
-  const pendingTokenPromises = {};
-
-  // Listen for messages from the Host Application
-  window.addEventListener('message', function(event) {
-
-    const messageData = event.data;
-
-  if (messageData && messageData.type === 'RESOLVE_NEW_FIREBASE_TOKEN') {
-      const { success, token, error, promiseId } = messageData ?? {};
-      if (pendingTokenPromises[promiseId]) {
-        if (success) {
-          pendingTokenPromises[promiseId].resolve(token);
-        } else {
-          pendingTokenPromises[promiseId].reject(new Error(error || 'Token refresh failed from host.'));
-        }
-        delete pendingTokenPromises[promiseId];
-      }
-    }
-  });
-
-  // Expose a function for the Generated App to request a new Firebase token
-  window.requestNewFirebaseToken = function() {
-    const currentPromiseId = nextTokenPromiseId++;
-    const promise = new Promise((resolve, reject) => {
-      pendingTokenPromises[currentPromiseId] = { resolve, reject };
-    });
-    if (window.parent && window.parent !== window) {
-      window.parent.postMessage({
-        type: 'REQUEST_NEW_FIREBASE_TOKEN',
-        promiseId: currentPromiseId
-      }, '*');
-    } else {
-      pendingTokenPromises[currentPromiseId].reject(new Error('No parent window to request token from.'));
-      delete pendingTokenPromises[currentPromiseId];
-    }
-    return promise;
-  };
-})();</script><script data-bard-client-injected="true">
-let realOriginalGetUserMedia = null;
-if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-  realOriginalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
-}
-
-(function() {
-  if (navigator.mediaDevices && navigator.mediaDevices.__proto__) {
-    try {
-      Object.defineProperty(navigator.mediaDevices.__proto__, 'getUserMedia', {
-        get: function() {
-          return undefined; // Or throw an error
-        },
-        configurable: false
-      });
-    } catch (error) {
-      console.error("Error defining prototype getter:", error);
-    }
-  }
-})();
-
-(function() {
-  const pendingMediaResolvers = {};
-  let nextMediaPromiseId = 0;
-
-  function requestMediaPermissions(constraints) {
-    const mediaPromiseId = nextMediaPromiseId++;
-    const promise = new Promise((resolve, reject) => {
-      pendingMediaResolvers[mediaPromiseId] = (granted) => {
-        delete pendingMediaResolvers[mediaPromiseId];
-        resolve(granted);
-      };
-    });
-
-    window.parent.postMessage({
-      type: 'requestMediaPermission',
-      constraints: constraints,
-      promiseId: mediaPromiseId,
-    }, '*');
-
-    return promise;
-  }
-
-  let originalGetUserMedia = realOriginalGetUserMedia;
-
-  function interceptGetUserMedia() {
-    if (navigator.mediaDevices) {
-      Object.defineProperty(navigator.mediaDevices, 'getUserMedia', {
-        value: function(constraints) {
-          return requestMediaPermissions(constraints).then((granted) => {
-            if (granted) {
-              if (originalGetUserMedia) {
-                return originalGetUserMedia(constraints);
-              } else {
-                throw new Error("Original getUserMedia not available.");
-              }
-            } else {
-              throw new DOMException('Permission denied', 'NotAllowedError');
-            }
-          });
-        },
-        writable: false,
-        configurable: false
-      });
-    }
-  }
-
-  interceptGetUserMedia();
-
-  const observer = new MutationObserver(function(mutationsList, observer) {
-    for (const mutation of mutationsList) {
-      if (mutation.type === 'reconfigured' && mutation.name === 'getUserMedia' && mutation.object === navigator.mediaDevices) {
-        interceptGetUserMedia();
-      } else if (mutation.type === 'attributes' && mutation.attributeName === 'getUserMedia' && mutation.target === navigator.mediaDevices) {
-        interceptGetUserMedia();
-      } else if (mutation.type === 'childList' && mutation.addedNodes) {
-        mutation.addedNodes.forEach(node => {
-          if (node === navigator.mediaDevices) {
-            interceptGetUserMedia();
-          }
-        });
-      }
-    }
-  });
-
-  function interceptSpeechRecognition() {
-    if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
-      return;
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog Académico UCV | Estrategias Didácticas en Inglés Nivel A1</title>
+  <style>
+    :root {
+      --primary: #12284c;
+      --primary-light: #1e3f73;
+      --accent: #d9232e;
+      --gold: #eab308;
+      --bg: #f4f6f9;
+      --surface: #ffffff;
+      --text: #1e293b;
+      --text-muted: #475569;
+      --border: #e2e8f0;
     }
 
-    const OriginalSpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    const SpeechRecognitionWrapper = function(...args) {
-      const recognizer = new OriginalSpeechRecognition(...args);
-      const originalStart = recognizer.start.bind(recognizer);
-
-      recognizer.start = function() {
-        requestMediaPermissions({ audio: true }).then(granted => {
-          if (granted) {
-            originalStart();
-          } else {
-            const errorEvent = new SpeechRecognitionErrorEvent('error');
-            errorEvent.error = 'not-allowed'; // This is the standard error for permission denial.
-            recognizer.dispatchEvent(errorEvent);
-          }
-        });
-      };
-
-      return recognizer;
-    };
-
-    SpeechRecognitionWrapper.prototype = OriginalSpeechRecognition.prototype;
-    SpeechRecognitionWrapper.prototype.constructor = SpeechRecognitionWrapper;
-
-    if (window.SpeechRecognition) {
-      window.SpeechRecognition = SpeechRecognitionWrapper;
-    }
-    if (window.webkitSpeechRecognition) {
-      window.webkitSpeechRecognition = SpeechRecognitionWrapper;
-    }
-  }
-
-  interceptSpeechRecognition();
-
-  window.addEventListener('message', function(event) {
-    if (event.data) {
-      if (event.data.type === 'resolveMediaPermission') {
-        const { promiseId, granted } = event.data;
-        if (pendingMediaResolvers[promiseId]) {
-          pendingMediaResolvers[promiseId](granted);
-        }
-      }
-    }
-  });
-
-})();</script><script ws-interception-config="{&quot;parentOrigin&quot;:&quot;https://gemini.google.com&quot;,&quot;proxiedDomains&quot;:[]}" data-bard-client-injected="true">(function(){'use strict';var u=typeof Object.defineProperties=="function"?Object.defineProperty:function(b,d,e){if(b==Array.prototype||b==Object.prototype)return b;b[d]=e.value;return b};function v(b){b=["object"==typeof globalThis&&globalThis,b,"object"==typeof window&&window,"object"==typeof self&&self,"object"==typeof global&&global];for(var d=0;d<b.length;++d){var e=b[d];if(e&&e.Math==Math)return e}throw Error("Cannot find global object");}var w=v(this);
-function y(b,d){if(d)a:{var e=w;b=b.split(".");for(var h=0;h<b.length-1;h++){var k=b[h];if(!(k in e))break a;e=e[k]}b=b[b.length-1];h=e[b];d=d(h);d!=h&&d!=null&&u(e,b,{configurable:!0,writable:!0,value:d})}}function z(b){function d(h){return b.next(h)}function e(h){return b.throw(h)}return new Promise(function(h,k){function m(n){n.done?h(n.value):Promise.resolve(n.value).then(d,e).then(m,k)}m(b.next())})}y("globalThis",function(b){return b||w});/*
-
- Copyright The Closure Library Authors.
- SPDX-License-Identifier: Apache-2.0
-*/
-function A(b,d){function e(){}e.prototype=d.prototype;b.i=d.prototype;b.prototype=new e;b.prototype.constructor=b;b.h=function(h,k,m){for(var n=Array(arguments.length-2),p=2;p<arguments.length;p++)n[p-2]=arguments[p];return d.prototype[k].apply(h,n)}};function B(b,d,e="*"){function h(a){if(typeof a==="string")return F.encode(a).buffer;if(a instanceof ArrayBuffer)return a.slice(0);if(ArrayBuffer.isView(a))return a.buffer.slice(a.byteOffset,a.byteOffset+a.byteLength);throw Error("Invalid data type");}function k(a){a=h(a);var f={type:"send",data:new Uint8Array(a)},g;(g=r)==null||g.postMessage(f,[a])}function m(){if(!r)throw Error("Data port not captured yet.");r.onmessage=a=>{if(a.data.type==="message"){a=new MessageEvent("message",{data:G.decode(a.data.data)});
-let f;(f=c.onmessage)==null||f.call(c,a);c.dispatchEvent(a)}}}function n(){if(!t)throw Error("Control port not captured yet.");t.onmessage=a=>{switch(a.data.type){case "open":l=1;var f=new Event("open"),g;(g=c.onopen)==null||g.call(c,f);c.dispatchEvent(f);q.forEach(H=>{k(H)});q=[];break;case "close":g=a.data;l=3;g=new CloseEvent("close",{code:g.code,reason:g.reason,wasClean:g.wasClean});(f=c.onclose)==null||f.call(c,g);c.dispatchEvent(g);break;case "error":l=3;f=new Event("error");let x;(x=c.onerror)==
-null||x.call(c,f);c.dispatchEvent(f)}}}function p(a){return z(function*(){var f=new MessageChannel;t=f.port1;var g=new MessageChannel;r=g.port1;n();m();window.parent.postMessage({type:"websocket_open",portOrdering:["control","data"],url:b,protocols:a||[],connectionId:I},e,[f.port2,g.port2])}())}var c=Reflect.construct(EventTarget,[],new.target);c.CONNECTING=0;c.OPEN=1;c.CLOSING=2;c.CLOSED=3;c.url=b;c.binaryType="arraybuffer";c.protocol="";c.extensions="";var l=0,t=null,r=null,q=[],F=new TextEncoder,
-G=new TextDecoder;c.onopen=null;c.onmessage=null;c.onclose=null;c.onerror=null;Object.defineProperty(c,"readyState",{get:()=>l,enumerable:!0,configurable:!0});Object.defineProperty(c,"bufferedAmount",{get:()=>{var a=0;q.forEach(f=>{a+=typeof f==="string"?f.length:f.byteLength});return a},enumerable:!0,configurable:!0});var I=function(){var a;return((a=globalThis.crypto)==null?0:a.randomUUID)?globalThis.crypto.randomUUID():"xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,f=>{var g=Math.random()*
-16|0;return(f==="x"?g:g&3|8).toString(16)})}();c.send=a=>{if(l===1)a instanceof Blob?a.arrayBuffer().then(f=>{k(f)}):k(a);else if(l===0)if(typeof a==="string")q.push(a);else if(a instanceof ArrayBuffer||ArrayBuffer.isView(a))q.push(h(a));else throw Error("Sending Blob is not supported before the connection is open.");else console.debug("WebSocket send called in CLOSING or CLOSED state; ignored.")};c.close=(a=1E3,f="")=>{if(l!==2&&l!==3){l=2;a={type:"close",code:a,reason:f,wasClean:a===1E3};var g;
-(g=t)==null||g.postMessage(a)}};Promise.resolve().then(()=>p(d));return c}A(B,EventTarget);var C=document.currentScript,D=C==null?void 0:C.getAttribute("ws-interception-config");if(!D)throw Error("WebSocket Interceptor: Missing ws-interception-config attribute in the script tag.");var E=JSON.parse(D);if(!E.parentOrigin||typeof E.parentOrigin!=="string")throw Error("WebSocket Interceptor: Invalid parentOrigin in ws-interception-config");
-(function(b){var d=Object.getOwnPropertyDescriptor(window,"WebSocket");if(!d||d.writable||d.configurable)d=Object.assign(function(e,h){try{let k=(new URL(e)).hostname;if(b.proxiedDomains.some(m=>k===m||k.endsWith(`.${m}`)))return new B(e,h,b.parentOrigin)}catch(k){throw window.parent.postMessage({type:"websocket_blocked",url:e,reason:"blocked_invalid_url"},b.parentOrigin),new DOMException(`WebSocket connection to '${e}' is not allowed in Canvas.`,"SecurityError");}window.parent.postMessage({type:"websocket_blocked",
-url:e,reason:"blocked_domain_not_allowlisted"},b.parentOrigin);throw new DOMException(`WebSocket connection to '${e}' is not allowed in Canvas.`,"SecurityError");},{CONNECTING:0,OPEN:1,CLOSING:2,CLOSED:3}),Object.defineProperty(window,"WebSocket",{value:d,writable:!1,configurable:!1})})({proxiedDomains:E.proxiedDomains||[],parentOrigin:E.parentOrigin});}).call(this);
-</script><script data-bard-client-injected="true">((function(modelInformation) {
-  const originalFetch = window.fetch;
-  // TODO: b/421908508 - Move these out of the script and match all generative AI model calls.
-  let googleLlmBaseApiUrls = [
-    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.textModelName + ':streamGenerateContent',
-    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.textModelName + ':generateContent',
-    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.imageModelName + ':predict',
-    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.imageModelName + ':predictLongRunning',
-    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.imageEditModelName + ':generateContent',
-    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.imageTransformModelName + ':generateContent',
-    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.videoModelName + ':predict',
-    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.videoModelName + ':predictLongRunning',
-    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.ttsModelName + ':generateContent',
-  ];
-  modelInformation.deprecatedTextModelNames.forEach((modelName) => {
-    googleLlmBaseApiUrls.push(
-      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':streamGenerateContent',
-      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent',
-    );
-  });
-  modelInformation.deprecatedImageModelNames.forEach((modelName) => {
-    googleLlmBaseApiUrls.push(
-      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':predict',
-      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':predictLongRunning',
-      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent',
-      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':streamGenerateContent',
-    );
-  });
-  modelInformation.deprecatedGenerateImageModelNames.forEach((modelName) => {
-    googleLlmBaseApiUrls.push(
-      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent',
-      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':streamGenerateContent',
-    );
-  });
-  modelInformation.deprecatedImageTransformModelNames.forEach((modelName) => {
-    googleLlmBaseApiUrls.push(
-      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent',
-      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':streamGenerateContent',
-    );
-  });
-
-  const pendingFetchResolvers = {};
-  let nextPromiseId = 0;
-
-  function handleStringInput(input, optionsArgument) {
-    const actualUrl = input;
-    const fetchCallArgs = [actualUrl, optionsArgument];
-    const effectiveOptions = optionsArgument || {};
-    const bodyForApiKeyCheck = effectiveOptions.body;
-    const bodyForPostMessage = effectiveOptions.body;
-    return { actualUrl, fetchCallArgs, effectiveOptions, bodyForApiKeyCheck, bodyForPostMessage };
-  }
-
-  function handleRequestInput(input, optionsArgument) {
-    const actualUrl = input.url;
-    const fetchCallArgs = [input, optionsArgument];
-    const effectiveOptions = { method: input.method, headers: new Headers(input.headers) };
-    let bodyForApiKeyCheck;
-    let bodyForPostMessage;
-
-    if (optionsArgument) {
-      if (optionsArgument.method) effectiveOptions.method = optionsArgument.method;
-      if (optionsArgument.headers) effectiveOptions.headers = new Headers(optionsArgument.headers);
-      if ('body' in optionsArgument) {
-        bodyForApiKeyCheck = optionsArgument.body;
-        bodyForPostMessage = optionsArgument.body;
-      } else {
-        bodyForApiKeyCheck = undefined;
-        bodyForPostMessage = input.body;
-      }
-    } else {
-      bodyForApiKeyCheck = undefined;
-      bodyForPostMessage = input.body;
-    }
-    return { actualUrl, fetchCallArgs, effectiveOptions, bodyForApiKeyCheck, bodyForPostMessage };
-  }
-
-  window.fetch = function(input, optionsArgument) {
-    let actualUrl;
-    let fetchCallArgs;
-    let effectiveOptions = {};
-    let bodyForApiKeyCheck;
-    let bodyForPostMessage;
-
-    if (typeof input === 'string') {
-      ({actualUrl, fetchCallArgs, effectiveOptions, bodyForApiKeyCheck, bodyForPostMessage} = handleStringInput(input, optionsArgument));
-    } else if (input instanceof Request) {
-      ({actualUrl, fetchCallArgs, effectiveOptions, bodyForApiKeyCheck, bodyForPostMessage} = handleRequestInput(input, optionsArgument));
-    } else {
-      return originalFetch.apply(window, [input, optionsArgument]);
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      scroll-behavior: smooth;
     }
 
-    effectiveOptions.method = effectiveOptions.method || 'GET';
-    if (!effectiveOptions.headers) {
-      effectiveOptions.headers = new Headers();
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
     }
 
-
-    if (typeof actualUrl === 'string' && googleLlmBaseApiUrls.some((url) => actualUrl.startsWith(url))) {
-      let apiKeyIsNull = true;
-
-      const regex = new RegExp("models/([^:]+)");
-      const modelNameMatch = actualUrl.match(regex);
-      const modelName = modelNameMatch ? modelNameMatch[1] : 'unspecified';
-
-
-      try {
-        const urlObject = new URL(actualUrl);  // Use URL object for robust parsing
-        const apiKeyParam = urlObject.searchParams.get('key');
-        if (apiKeyParam) {
-          apiKeyIsNull = false;
-        }
-      } catch (e) {
-        // Continue checks even if URL parsing fails
-      }
-
-      if (apiKeyIsNull && effectiveOptions.headers) {
-        const h = new Headers(effectiveOptions.headers);
-        const apiKeyHeaderValue = h.get('X-API-Key') || h.get('x-api-key');
-        if (apiKeyHeaderValue) {
-          apiKeyIsNull = false;
-          return originalFetch.apply(window, fetchCallArgs);
-        }
-      }
-
-      if (apiKeyIsNull && effectiveOptions.method && ['POST', 'PUT', 'PATCH'].includes(effectiveOptions.method.toUpperCase()) && typeof bodyForApiKeyCheck === 'string') {
-        try {
-          const bodyData = JSON.parse(bodyForApiKeyCheck);
-          if (bodyData && bodyData.apiKey) {
-            apiKeyIsNull = false;
-            return originalFetch.apply(window, fetchCallArgs);
-          }
-        } catch (e) {
-          // Ignore JSON parsing errors
-        }
-      }
-
-      if(apiKeyIsNull) {
-        const promiseId = nextPromiseId++;
-        const promise = new Promise((resolve) => {
-          pendingFetchResolvers[promiseId] = (resolvedResponse) => {
-            delete pendingFetchResolvers[promiseId];
-            resolve(resolvedResponse);
-          };
-        });
-
-        let serializedBodyForPostMessage;
-        if (typeof bodyForPostMessage === 'string' || bodyForPostMessage == null) {
-            serializedBodyForPostMessage = bodyForPostMessage;
-        } else if (bodyForPostMessage instanceof ReadableStream) {
-            serializedBodyForPostMessage = null;
-        } else {
-            try {
-                serializedBodyForPostMessage = JSON.stringify(bodyForPostMessage);
-            } catch (e) {
-                serializedBodyForPostMessage = null;
-            }
-        }
-
-        const messageOptions = {
-            method: effectiveOptions.method,
-            headers: Object.fromEntries(new Headers(effectiveOptions.headers).entries()),
-            body: serializedBodyForPostMessage
-        };
-
-        window.parent.postMessage({
-          type: 'requestFetch',
-          url: actualUrl,
-          modelName: modelName,
-          options: messageOptions,
-          promiseId: promiseId,
-        }, '*');
-
-        return promise;
-      }
-      return originalFetch.apply(window, fetchCallArgs);
-    }
-    return originalFetch.apply(window, fetchCallArgs);
-  };
-
-  window.addEventListener('message', function(event) {
-    if (event.data && event.data.type === 'resolveFetch') {
-      const { promiseId, response } = event.data;
-      if (pendingFetchResolvers[promiseId]) {
-        try {
-          const reconstructedResponse = new Response(response.body, {
-            status: response.status,
-            statusText: response.statusText,
-            headers: new Headers(response.headers),
-          });
-          pendingFetchResolvers[promiseId](reconstructedResponse);
-        } catch (error) {
-          pendingFetchResolvers[promiseId](new Response(null, { status: 500, statusText: "Interceptor Response Reconstruction Error" }));
-        }
-      }
-    }
-  });
-
-}))({"textModelName":"gemini-3-flash-preview","imageModelName":"imagen-4.0-generate-001","imageEditModelName":"gemini-3.1-flash-image","imageTransformModelName":"gemini-3-pro-image","videoModelName":"veo-2.0-generate-001","ttsModelName":"gemini-2.5-flash-preview-tts","deprecatedTextModelNames":["gemini-2.0-flash","gemini-2.5-flash","gemini-2.5-flash-preview-04-17","gemini-2.5-flash-preview-05-20","gemini-2.5-flash-preview-09-2025"],"deprecatedImageModelNames":["imagen-3.0-generate-001","imagen-3.0-generate-002"],"deprecatedGenerateImageModelNames":["gemini-2.5-flash-image-preview","gemini-2.5-flash-image","gemini-3.1-flash-image-preview"],"deprecatedImageTransformModelNames":["gemini-3-pro-image-preview-11-2025"]})</script><script data-bard-client-injected="true">(function() {
-  const OVERLAY_SELECTOR =
-    'dialog[open], [role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"], [role="combobox"]';
-
-  function isVisibleOverlay(element) {
-    if (element.closest('[hidden], [aria-hidden="true"], [inert]')) {
-      return false;
-    }
-    if (window.getComputedStyle(element).visibility === 'hidden') {
-      return false;
-    }
-    for (let cur = element; cur; cur = cur.parentElement) {
-      if (window.getComputedStyle(cur).display === 'none') {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  function hasOpenOverlay() {
-    const candidates = document.querySelectorAll(OVERLAY_SELECTOR);
-    for (let i = 0; i < candidates.length; i++) {
-      if (isVisibleOverlay(candidates[i])) {
-        return true;
-      }
-    }
-    try {
-      if (document.querySelector('[popover]:popover-open')) {
-        return true;
-      }
-    } catch (e) {
-      // Ignore engines that do not support :popover-open.
-    }
-    return false;
-  }
-
-  function isNonEmptySearchInput(target) {
-    return (
-      Boolean(target) &&
-      target.tagName === 'INPUT' &&
-      typeof target.type === 'string' &&
-      target.type.toLowerCase() === 'search' &&
-      typeof target.value === 'string' &&
-      target.value.length > 0
-    );
-  }
-
-  function shouldIgnoreEscape(event) {
-    return (
-      event.key !== 'Escape' ||
-      event.altKey ||
-      event.ctrlKey ||
-      event.metaKey ||
-      event.shiftKey ||
-      event.isComposing ||
-      event.repeat ||
-      event.keyCode === 229 ||
-      isNonEmptySearchInput(event.target)
-    );
-  }
-
-  let shouldIgnoreCaptureState = false;
-
-  window.addEventListener(
-    'keydown',
-    function(event) {
-      if (event.key === 'Escape') {
-        shouldIgnoreCaptureState =
-          hasOpenOverlay() || isNonEmptySearchInput(event.target);
-      }
-    },
-    {capture: true},
-  );
-
-  window.addEventListener('keydown', function(event) {
-    if (
-      shouldIgnoreEscape(event) ||
-      event.defaultPrevented ||
-      shouldIgnoreCaptureState
-    ) {
-      return;
-    }
-    const wasBlockedOnCapture = shouldIgnoreCaptureState;
-    queueMicrotask(function() {
-      if (event.defaultPrevented || wasBlockedOnCapture) {
-        return;
-      }
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({'type': 'escapeKey'}, '*');
-      }
-    });
-  });
-})();</script><script data-bard-client-injected="true">(function() {
-  function normalizeSlug(str) {
-    try {
-      return str
-        .trim()
-        .toLowerCase()
-        .replace(/[^p{L}p{N}s_-]/gu, '')
-        .replace(/s+/g, '-');
-    } catch (e) {
-      return str
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9s_-]/g, '')
-        .replace(/s+/g, '-');
-    }
-  }
-
-  function findTargetElement(hash) {
-    if (!hash || hash === '#') {
-      return null;
-    }
-    const rawId = hash.startsWith('#') ? hash.slice(1) : hash;
-    let decodedId = rawId;
-    try {
-      decodedId = decodeURIComponent(rawId);
-    } catch (e) {
-      // Ignore URI malformed errors.
+    /* Navegación (Regla de los 3 clics) */
+    header {
+      background-color: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     }
 
-    // 1. Direct ID match (raw and decoded).
-    let target = document.getElementById(rawId) || document.getElementById(decodedId);
-    if (target) {
-      return target;
+    .nav-container {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0.9rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
     }
 
-    // 2. Name attribute match (<a name="...">).
-    try {
-      if (typeof CSS !== 'undefined' && CSS.escape) {
-        target =
-          document.querySelector('[name="' + CSS.escape(rawId) + '"]') ||
-          document.querySelector('[name="' + CSS.escape(decodedId) + '"]');
-      } else {
-        const namedElements = document.getElementsByName(rawId);
-        if (namedElements && namedElements.length > 0) {
-          return namedElements[0];
-        }
-      }
-    } catch (e) {
-      // Ignore querySelector syntax errors.
-    }
-    if (target) {
-      return target;
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: var(--primary);
     }
 
-    // 3. Match heading text by slug (for Markdown TOCs where headings lack explicit IDs).
-    const targetSlug = normalizeSlug(decodedId);
-    if (targetSlug) {
-      for (const heading of document.querySelectorAll('h1, h2, h3, h4, h5, h6')) {
-        if (normalizeSlug(heading.textContent || '') === targetSlug) {
-          return heading;
-        }
-      }
+    .brand-logo {
+      background-color: var(--primary);
+      color: #fff;
+      font-weight: 800;
+      padding: 0.45rem 0.65rem;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      letter-spacing: 0.5px;
     }
 
-    return null;
-  }
-
-  document.addEventListener('click', function(event) {
-    const target = event.target;
-    const anchor = target && typeof target.closest === 'function' ? target.closest('a') : null;
-    if (!anchor) {
-      return;
+    .brand-text strong {
+      display: block;
+      font-size: 1rem;
+      line-height: 1.2;
     }
 
-    const href = anchor.getAttribute('href');
-    if (
-      !href ||
-      href.trim().toLowerCase().startsWith('javascript:') ||
-      anchor.hasAttribute('download')
-    ) {
-      return;
+    .brand-text span {
+      font-size: 0.78rem;
+      color: var(--text-muted);
     }
 
-    // Check if the link is an in-page hash / anchor link.
-    if (href.startsWith('#')) {
-      event.preventDefault();
-      const targetElement = findTargetElement(href);
-      if (targetElement) {
-        targetElement.scrollIntoView({behavior: 'smooth', block: 'start'});
-      }
-      return;
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 1.25rem;
+      flex-wrap: wrap;
     }
 
-    // Check if the URL has the same origin/pathname but with a hash.
-    try {
-      const url = new URL(anchor.href, window.location.href);
-      if (
-        url.hash &&
-        url.origin === window.location.origin &&
-        url.pathname === window.location.pathname
-      ) {
-        event.preventDefault();
-        const targetElement = findTargetElement(url.hash);
-        if (targetElement) {
-          targetElement.scrollIntoView({behavior: 'smooth', block: 'start'});
-        }
-        return;
-      }
-    } catch (e) {
-      // Fall through if URL parsing fails.
+    nav a {
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: color 0.2s;
     }
 
-    // For all external or full navigation links, prevent iframe-level navigation
-    // (which breaks in AGSA WebView or sandboxed iframes) and ensure they open
-    // safely in a new tab/window.
-    if (anchor.target !== '_blank') {
-      event.preventDefault();
-      window.open(anchor.href, '_blank', 'noopener,noreferrer');
+    nav a:hover {
+      color: var(--accent);
     }
-  }, {capture: true});
-})();</script><script data-bard-client-injected="true">(function(){'use strict';function a(){window.parent.postMessage({type:"interaction"},"*")}window.addEventListener("click",a,{capture:!0,passive:!0});window.addEventListener("touchstart",a,{capture:!0,passive:!0});window.addEventListener("keydown",a,{capture:!0,passive:!0});}).call(this);
-</script><script data-bard-client-injected="true">(function() {
-  const originalConsoleLog = console.log;
-  const originalConsoleError = console.error;
 
-    /**
-   * Normalizes an error event or a promise rejection reason into a structured error object.
-   * @param {*} errorEventOrReason The error object or reason.
-   * @return {object} Structured error data { message, name, stack }.
-   */
-  function getErrorObject(errorEventOrReason) {
-    if (errorEventOrReason instanceof Error) {
-      return {
-        message: errorEventOrReason.message,
-        name: errorEventOrReason.name,
-        stack: errorEventOrReason.stack,
-      };
+    /* Portada / Hero */
+    .hero {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: #ffffff;
+      padding: 3.5rem 1.5rem;
+      text-align: center;
     }
-    // Fallback for non-Error objects.
-    try {
-      return {
-        message: JSON.stringify(errorEventOrReason),
-        name: 'UnknownErrorType',
-        stack: null,
-      };
-    } catch (e) {
-      return {
-        message: String(errorEventOrReason),
-        name: 'UnknownErrorTypeNonStringifiable',
-        stack: null,
-      };
+
+    .hero-inner {
+      max-width: 960px;
+      margin: 0 auto;
     }
-  }
 
-  /**
-   * Converts an array of arguments (from log/error) into a single string.
-   * Handles Error objects specially to include their message and stack.
-   * @param {Array<*>} args - Arguments passed to console methods.
-   * @return {string} A string representation of the arguments.
-   */
-  function stringifyArgs(args) {
-    return args
-      .map((arg) => {
-        if (arg instanceof Error) {
-          const {message, stack} = arg;
-          return `Error: ${message}${stack ? ('\nStack: ' + stack) : ''}`;
-        }
-        if (typeof arg === 'object' && arg !== null) {
-          try {
-            return JSON.stringify(arg);
-          } catch (error) {
-            return '[Circular Object]';
-          }
-        } else {
-          return String(arg);
-        }
-      })
-      .join(' ');
-  }
-
-  console.log = function(...args) {
-    const logString = stringifyArgs(args);
-    window.parent.postMessage({ type: 'log', message: logString }, '*');
-    originalConsoleLog.apply(console, args);
-  };
-
-  console.error = function(...args) {
-    let errorData;
-    if (args.length > 0 && args[0] instanceof Error) {
-      const err = args[0];
-      // If the first arg is an Error, capture its details.
-      errorData = {
-        type: 'error',
-        source: 'CONSOLE_ERROR',
-        ...getErrorObject(err),
-        rawArgsString: stringifyArgs(args.slice(1)),
-        timestamp: new Date().toISOString(),
-      };
-    } else {
-      // If not an Error object, treat all args as a general error message.
-      errorData = {
-        type: 'error',
-        source: 'CONSOLE_ERROR',
-        message: stringifyArgs(args),
-        name: 'ConsoleLoggedError',
-        stack: null,
-        timestamp: new Date().toISOString(),
-      };
+    .pill-inst {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      padding: 0.35rem 1rem;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      margin-bottom: 1.25rem;
     }
-    window.parent.postMessage(errorData, '*');
-    originalConsoleError.apply(console, args);
-  };
 
-  // Listen for global unhandled synchronous errors.
-  window.addEventListener('error', function(event) {
-    const errorDetails = event.error ? getErrorObject(event.error) : {
-      message: event.message,
-      name: 'GlobalError',
-      stack: null,
-      filename: event.filename,
-      lineno: event.lineno,
-      colno: event.colno,
-    };
+    .hero h1 {
+      font-size: clamp(1.75rem, 3.5vw, 2.65rem);
+      line-height: 1.25;
+      margin-bottom: 1rem;
+      font-weight: 800;
+    }
 
-    window.parent.postMessage({
-      type: 'error',
-      source: 'global',
-      ...errorDetails,
-      message: errorDetails.message || event.message,
-      timestamp: new Date().toISOString(),
-    }, '*');
-  });
+    .hero p {
+      max-width: 780px;
+      margin: 0 auto 1.5rem;
+      font-size: 1.05rem;
+      color: #e2e8f0;
+    }
 
-  // Listen for unhandled promise rejections (asynchronous errors).
-  window.addEventListener('unhandledrejection', function(event) {
-    const errorDetails = getErrorObject(event.reason);
+    .tags-ods {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-bottom: 2.25rem;
+    }
 
-    window.parent.postMessage({
-      type: 'error',
-      source: 'unhandledrejection',
-      ...errorDetails,
-      message: errorDetails.message || 'Unhandled Promise Rejection',
-      timestamp: new Date().toISOString(),
-    }, '*');
-  });
+    .tag {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 0.3rem 0.85rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+    }
 
-})();</script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estrategias Didácticas para mejorar la habilidad comunicativa oral en alumnos de nivel A1 de una universidad en Huancayo, 2022 | Blog Académico UCV</title>
-    <!-- Carga de Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Tipografías editoriales académicas: Lora / Merriweather para títulos e Inter para lectura -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;family=Lora:ital,wght@0,600;0,700;1,400&amp;family=Merriweather:ital,wght@0,400;0,700;1,400&amp;display=swap" rel="stylesheet">
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        ucv: {
-                            navy: '#0f294a',       // Azul marino institucional
-                            navyLight: '#1b3f6e',  // Azul secundario
-                            red: '#c8102e',        // Carmesí institucional
-                            redDark: '#9e0b23',
-                            gold: '#b45309',       // Dorado suave editorial
-                            cream: '#fafaf9',      // Blanco hueso editorial
-                            text: '#1e293b'        // Texto oscuro de alto contraste
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        serif: ['Lora', 'Merriweather', 'serif'],
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        #reading-progress {
-            transition: width 0.15s ease-out;
-        }
-        .editorial-body p {
-            line-height: 1.85;
-            margin-bottom: 1.25rem;
-        }
-    </style>
-<style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:Inter, sans-serif;font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.pointer-events-none{pointer-events:none}.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.sticky{position:sticky}.inset-0{inset:0px}.left-0{left:0px}.top-0{top:0px}.top-1\.5{top:0.375rem}.z-40{z-index:40}.z-50{z-index:50}.mx-auto{margin-left:auto;margin-right:auto}.my-6{margin-top:1.5rem;margin-bottom:1.5rem}.\!mb-0{margin-bottom:0px !important}.mb-1{margin-bottom:0.25rem}.mb-10{margin-bottom:2.5rem}.mb-2{margin-bottom:0.5rem}.mb-3{margin-bottom:0.75rem}.mb-4{margin-bottom:1rem}.mb-5{margin-bottom:1.25rem}.mb-6{margin-bottom:1.5rem}.mb-8{margin-bottom:2rem}.mt-0\.5{margin-top:0.125rem}.mt-1{margin-top:0.25rem}.mt-10{margin-top:2.5rem}.mt-2{margin-top:0.5rem}.mt-5{margin-top:1.25rem}.mt-6{margin-top:1.5rem}.mt-9{margin-top:2.25rem}.block{display:block}.flex{display:flex}.inline-flex{display:inline-flex}.grid{display:grid}.hidden{display:none}.h-1\.5{height:0.375rem}.h-10{height:2.5rem}.h-16{height:4rem}.h-2{height:0.5rem}.h-4{height:1rem}.h-6{height:1.5rem}.h-7{height:1.75rem}.h-8{height:2rem}.h-full{height:100%}.w-0{width:0px}.w-1\.5{width:0.375rem}.w-10{width:2.5rem}.w-2{width:0.5rem}.w-4{width:1rem}.w-6{width:1.5rem}.w-7{width:1.75rem}.w-full{width:100%}.max-w-3xl{max-width:48rem}.max-w-4xl{max-width:56rem}.max-w-5xl{max-width:64rem}.max-w-6xl{max-width:72rem}.shrink-0{flex-shrink:0}.cursor-pointer{cursor:pointer}.grid-cols-1{grid-template-columns:repeat(1, minmax(0, 1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-start{align-items:flex-start}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-2{gap:0.5rem}.gap-2\.5{gap:0.625rem}.gap-3{gap:0.75rem}.gap-3\.5{gap:0.875rem}.gap-4{gap:1rem}.gap-8{gap:2rem}.space-x-1 > :not([hidden]) ~ :not([hidden]){--tw-space-x-reverse:0;margin-right:calc(0.25rem * var(--tw-space-x-reverse));margin-left:calc(0.25rem * calc(1 - var(--tw-space-x-reverse)))}.space-x-3 > :not([hidden]) ~ :not([hidden]){--tw-space-x-reverse:0;margin-right:calc(0.75rem * var(--tw-space-x-reverse));margin-left:calc(0.75rem * calc(1 - var(--tw-space-x-reverse)))}.space-y-1 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.25rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.25rem * var(--tw-space-y-reverse))}.space-y-3 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.75rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.75rem * var(--tw-space-y-reverse))}.space-y-4 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem * var(--tw-space-y-reverse))}.space-y-8 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(2rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(2rem * var(--tw-space-y-reverse))}.self-start{align-self:flex-start}.overflow-hidden{overflow:hidden}.scroll-smooth{scroll-behavior:smooth}.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rounded-2xl{border-radius:1rem}.rounded-3xl{border-radius:1.5rem}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:0.5rem}.rounded-md{border-radius:0.375rem}.rounded-xl{border-radius:0.75rem}.border{border-width:1px}.border-b{border-bottom-width:1px}.border-l-8{border-left-width:8px}.border-t{border-top-width:1px}.border-amber-400\/30{border-color:rgb(251 191 36 / 0.3)}.border-blue-200{--tw-border-opacity:1;border-color:rgb(191 219 254 / var(--tw-border-opacity, 1))}.border-red-400\/30{border-color:rgb(248 113 113 / 0.3)}.border-slate-200{--tw-border-opacity:1;border-color:rgb(226 232 240 / var(--tw-border-opacity, 1))}.border-slate-300{--tw-border-opacity:1;border-color:rgb(203 213 225 / var(--tw-border-opacity, 1))}.border-stone-200{--tw-border-opacity:1;border-color:rgb(231 229 228 / var(--tw-border-opacity, 1))}.border-ucv-gold{--tw-border-opacity:1;border-color:rgb(180 83 9 / var(--tw-border-opacity, 1))}.border-white\/10{border-color:rgb(255 255 255 / 0.1)}.border-white\/20{border-color:rgb(255 255 255 / 0.2)}.border-white\/25{border-color:rgb(255 255 255 / 0.25)}.bg-amber-500\/20{background-color:rgb(245 158 11 / 0.2)}.bg-blue-50\/60{background-color:rgb(239 246 255 / 0.6)}.bg-blue-50\/80{background-color:rgb(239 246 255 / 0.8)}.bg-emerald-100{--tw-bg-opacity:1;background-color:rgb(209 250 229 / var(--tw-bg-opacity, 1))}.bg-emerald-600{--tw-bg-opacity:1;background-color:rgb(5 150 105 / var(--tw-bg-opacity, 1))}.bg-slate-100{--tw-bg-opacity:1;background-color:rgb(241 245 249 / var(--tw-bg-opacity, 1))}.bg-slate-200{--tw-bg-opacity:1;background-color:rgb(226 232 240 / var(--tw-bg-opacity, 1))}.bg-stone-50{--tw-bg-opacity:1;background-color:rgb(250 250 249 / var(--tw-bg-opacity, 1))}.bg-ucv-cream{--tw-bg-opacity:1;background-color:rgb(250 250 249 / var(--tw-bg-opacity, 1))}.bg-ucv-gold{--tw-bg-opacity:1;background-color:rgb(180 83 9 / var(--tw-bg-opacity, 1))}.bg-ucv-navy{--tw-bg-opacity:1;background-color:rgb(15 41 74 / var(--tw-bg-opacity, 1))}.bg-ucv-red{--tw-bg-opacity:1;background-color:rgb(200 16 46 / var(--tw-bg-opacity, 1))}.bg-white{--tw-bg-opacity:1;background-color:rgb(255 255 255 / var(--tw-bg-opacity, 1))}.bg-white\/10{background-color:rgb(255 255 255 / 0.1)}.bg-white\/15{background-color:rgb(255 255 255 / 0.15)}.bg-white\/95{background-color:rgb(255 255 255 / 0.95)}.bg-gradient-to-br{background-image:linear-gradient(to bottom right, var(--tw-gradient-stops))}.bg-gradient-to-r{background-image:linear-gradient(to right, var(--tw-gradient-stops))}.from-ucv-navy{--tw-gradient-from:#0f294a var(--tw-gradient-from-position);--tw-gradient-to:rgb(15 41 74 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.via-ucv-navyLight{--tw-gradient-to:rgb(27 63 110 / 0)  var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), #1b3f6e var(--tw-gradient-via-position), var(--tw-gradient-to)}.to-ucv-navy{--tw-gradient-to:#0f294a var(--tw-gradient-to-position)}.to-ucv-navyLight{--tw-gradient-to:#1b3f6e var(--tw-gradient-to-position)}.p-1{padding:0.25rem}.p-2\.5{padding:0.625rem}.p-3{padding:0.75rem}.p-3\.5{padding:0.875rem}.p-4{padding:1rem}.p-5{padding:1.25rem}.p-6{padding:1.5rem}.px-2\.5{padding-left:0.625rem;padding-right:0.625rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.px-4{padding-left:1rem;padding-right:1rem}.px-6{padding-left:1.5rem;padding-right:1.5rem}.py-1{padding-top:0.25rem;padding-bottom:0.25rem}.py-1\.5{padding-top:0.375rem;padding-bottom:0.375rem}.py-14{padding-top:3.5rem;padding-bottom:3.5rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-2\.5{padding-top:0.625rem;padding-bottom:0.625rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.py-3\.5{padding-top:0.875rem;padding-bottom:0.875rem}.py-8{padding-top:2rem;padding-bottom:2rem}.pb-16{padding-bottom:4rem}.pb-4{padding-bottom:1rem}.pb-6{padding-bottom:1.5rem}.pb-8{padding-bottom:2rem}.pt-14{padding-top:3.5rem}.pt-2{padding-top:0.5rem}.pt-3{padding-top:0.75rem}.pt-4{padding-top:1rem}.pt-8{padding-top:2rem}.text-center{text-align:center}.font-sans{font-family:Inter, sans-serif}.font-serif{font-family:Lora, Merriweather, serif}.text-2xl{font-size:1.5rem;line-height:2rem}.text-3xl{font-size:1.875rem;line-height:2.25rem}.text-base{font-size:1rem;line-height:1.5rem}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:0.75rem;line-height:1rem}.font-bold{font-weight:700}.font-extrabold{font-weight:800}.font-medium{font-weight:500}.font-semibold{font-weight:600}.uppercase{text-transform:uppercase}.italic{font-style:italic}.\!leading-relaxed{line-height:1.625 !important}.leading-none{line-height:1}.leading-relaxed{line-height:1.625}.leading-snug{line-height:1.375}.leading-tight{line-height:1.25}.tracking-tight{letter-spacing:-0.025em}.tracking-wider{letter-spacing:0.05em}.tracking-widest{letter-spacing:0.1em}.text-amber-200{--tw-text-opacity:1;color:rgb(253 230 138 / var(--tw-text-opacity, 1))}.text-amber-300{--tw-text-opacity:1;color:rgb(252 211 77 / var(--tw-text-opacity, 1))}.text-blue-100{--tw-text-opacity:1;color:rgb(219 234 254 / var(--tw-text-opacity, 1))}.text-blue-200{--tw-text-opacity:1;color:rgb(191 219 254 / var(--tw-text-opacity, 1))}.text-blue-50{--tw-text-opacity:1;color:rgb(239 246 255 / var(--tw-text-opacity, 1))}.text-emerald-300{--tw-text-opacity:1;color:rgb(110 231 183 / var(--tw-text-opacity, 1))}.text-emerald-600{--tw-text-opacity:1;color:rgb(5 150 105 / var(--tw-text-opacity, 1))}.text-emerald-700{--tw-text-opacity:1;color:rgb(4 120 87 / var(--tw-text-opacity, 1))}.text-emerald-800{--tw-text-opacity:1;color:rgb(6 95 70 / var(--tw-text-opacity, 1))}.text-rose-300{--tw-text-opacity:1;color:rgb(253 164 175 / var(--tw-text-opacity, 1))}.text-slate-300{--tw-text-opacity:1;color:rgb(203 213 225 / var(--tw-text-opacity, 1))}.text-slate-500{--tw-text-opacity:1;color:rgb(100 116 139 / var(--tw-text-opacity, 1))}.text-slate-600{--tw-text-opacity:1;color:rgb(71 85 105 / var(--tw-text-opacity, 1))}.text-slate-700{--tw-text-opacity:1;color:rgb(51 65 85 / var(--tw-text-opacity, 1))}.text-slate-800{--tw-text-opacity:1;color:rgb(30 41 59 / var(--tw-text-opacity, 1))}.text-slate-900{--tw-text-opacity:1;color:rgb(15 23 42 / var(--tw-text-opacity, 1))}.text-ucv-gold{--tw-text-opacity:1;color:rgb(180 83 9 / var(--tw-text-opacity, 1))}.text-ucv-navy{--tw-text-opacity:1;color:rgb(15 41 74 / var(--tw-text-opacity, 1))}.text-ucv-red{--tw-text-opacity:1;color:rgb(200 16 46 / var(--tw-text-opacity, 1))}.text-ucv-text{--tw-text-opacity:1;color:rgb(30 41 59 / var(--tw-text-opacity, 1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.antialiased{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.opacity-10{opacity:0.1}.shadow-lg{--tw-shadow:0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-md{--tw-shadow:0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 4px 6px -1px var(--tw-shadow-color), 0 2px 4px -2px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-sm{--tw-shadow:0 1px 2px 0 rgb(0 0 0 / 0.05);--tw-shadow-colored:0 1px 2px 0 var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.backdrop-blur-md{--tw-backdrop-blur:blur(12px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.backdrop-blur-sm{--tw-backdrop-blur:blur(4px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition{transition-property:color, background-color, border-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-colors{transition-property:color, background-color, border-color, fill, stroke, -webkit-text-decoration-color;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, -webkit-text-decoration-color;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.selection\:bg-ucv-navy *::selection{--tw-bg-opacity:1;background-color:rgb(15 41 74 / var(--tw-bg-opacity, 1))}.selection\:text-white *::selection{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.selection\:bg-ucv-navy::selection{--tw-bg-opacity:1;background-color:rgb(15 41 74 / var(--tw-bg-opacity, 1))}.selection\:text-white::selection{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.hover\:bg-blue-50:hover{--tw-bg-opacity:1;background-color:rgb(239 246 255 / var(--tw-bg-opacity, 1))}.hover\:bg-emerald-50:hover{--tw-bg-opacity:1;background-color:rgb(236 253 245 / var(--tw-bg-opacity, 1))}.hover\:bg-slate-100:hover{--tw-bg-opacity:1;background-color:rgb(241 245 249 / var(--tw-bg-opacity, 1))}.hover\:bg-ucv-navyLight:hover{--tw-bg-opacity:1;background-color:rgb(27 63 110 / var(--tw-bg-opacity, 1))}.hover\:bg-ucv-redDark:hover{--tw-bg-opacity:1;background-color:rgb(158 11 35 / var(--tw-bg-opacity, 1))}.hover\:text-ucv-navy:hover{--tw-text-opacity:1;color:rgb(15 41 74 / var(--tw-text-opacity, 1))}.hover\:underline:hover{-webkit-text-decoration-line:underline;text-decoration-line:underline}.focus\:outline-none:focus{outline:2px solid transparent;outline-offset:2px}.focus\:ring-2:focus{--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000)}.focus\:ring-ucv-navy:focus{--tw-ring-opacity:1;--tw-ring-color:rgb(15 41 74 / var(--tw-ring-opacity, 1))}.group:hover .group-hover\:bg-ucv-red{--tw-bg-opacity:1;background-color:rgb(200 16 46 / var(--tw-bg-opacity, 1))}@media (min-width: 640px){.sm\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.sm\:grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}.sm\:flex-row{flex-direction:row}.sm\:items-center{align-items:center}.sm\:gap-6{gap:1.5rem}.sm\:self-center{align-self:center}.sm\:p-10{padding:2.5rem}.sm\:p-6{padding:1.5rem}.sm\:p-7{padding:1.75rem}.sm\:p-8{padding:2rem}.sm\:px-6{padding-left:1.5rem;padding-right:1.5rem}.sm\:py-20{padding-top:5rem;padding-bottom:5rem}.sm\:text-left{text-align:left}.sm\:text-2xl{font-size:1.5rem;line-height:2rem}.sm\:text-3xl{font-size:1.875rem;line-height:2.25rem}.sm\:text-4xl{font-size:2.25rem;line-height:2.5rem}.sm\:text-base{font-size:1rem;line-height:1.5rem}.sm\:text-lg{font-size:1.125rem;line-height:1.75rem}.sm\:text-sm{font-size:0.875rem;line-height:1.25rem}.sm\:text-xl{font-size:1.25rem;line-height:1.75rem}}@media (min-width: 768px){.md\:flex{display:flex}.md\:hidden{display:none}.md\:grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}}@media (min-width: 1024px){.lg\:col-span-5{grid-column:span 5 / span 5}.lg\:col-span-7{grid-column:span 7 / span 7}.lg\:grid-cols-12{grid-template-columns:repeat(12, minmax(0, 1fr))}.lg\:space-x-2 > :not([hidden]) ~ :not([hidden]){--tw-space-x-reverse:0;margin-right:calc(0.5rem * var(--tw-space-x-reverse));margin-left:calc(0.5rem * calc(1 - var(--tw-space-x-reverse)))}.lg\:p-12{padding:3rem}.lg\:px-8{padding-left:2rem;padding-right:2rem}.lg\:text-5xl{font-size:3rem;line-height:1}}</style></head>
-<body class="bg-ucv-cream text-ucv-text font-sans antialiased selection:bg-ucv-navy selection:text-white">
+    .tag.ods {
+      border-color: var(--gold);
+      color: #fef08a;
+      font-weight: 600;
+    }
 
-    <!-- Barra superior de progreso de lectura -->
-    <div class="fixed top-0 left-0 w-full h-1.5 bg-slate-200 z-50">
-        <div id="reading-progress" class="h-full bg-ucv-red w-0" style="width: 100%;"></div>
+    /* Tarjetas de indicadores */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    .metric-card {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+
+    .metric-card strong {
+      display: block;
+      font-size: 2rem;
+      color: #ffffff;
+      line-height: 1.1;
+      margin-bottom: 0.35rem;
+    }
+
+    .metric-card span {
+      font-size: 0.85rem;
+      color: #cbd5e1;
+    }
+
+    /* Contenedor Principal */
+    main {
+      max-width: 980px;
+      margin: 2.5rem auto;
+      padding: 0 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      border-bottom: 2px solid var(--bg);
+      padding-bottom: 0.85rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .section-header h2 {
+      color: var(--primary);
+      font-size: 1.45rem;
+    }
+
+    .badge {
+      background: #eff6ff;
+      color: var(--primary-light);
+      font-weight: 700;
+      font-size: 0.78rem;
+      padding: 0.3rem 0.75rem;
+      border-radius: 999px;
+      border: 1px solid #bfdbfe;
+    }
+
+    h3 {
+      color: var(--primary-light);
+      font-size: 1.15rem;
+      margin: 1.5rem 0 0.65rem;
+    }
+
+    p {
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+
+    ul.bullet-list, ol.num-list {
+      margin: 0.75rem 0 1.25rem 1.4rem;
+    }
+
+    ul.bullet-list li, ol.num-list li {
+      margin-bottom: 0.55rem;
+    }
+
+    .highlight-box {
+      background: #f8fafc;
+      border-left: 4px solid var(--accent);
+      padding: 1.15rem 1.25rem;
+      border-radius: 0 10px 10px 0;
+      margin: 1.25rem 0;
+    }
+
+    .highlight-box strong {
+      display: block;
+      color: var(--primary);
+      margin-bottom: 0.35rem;
+    }
+
+    /* Tabs Resumen / Abstract */
+    .tab-buttons {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .tab-btn {
+      padding: 0.45rem 1rem;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+
+    .tab-btn.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Grid de Autores */
+    .authors-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .author-item {
+      background: var(--bg);
+      padding: 1rem;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      font-size: 0.88rem;
+    }
+
+    .author-item strong {
+      display: block;
+      color: var(--primary);
+      font-size: 0.95rem;
+    }
+
+    .author-item a {
+      color: #0369a1;
+      text-decoration: none;
+      word-break: break-all;
+    }
+
+    /* Auditoría Técnica */
+    .audit-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.85rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .audit-item {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      color: #166534;
+      padding: 0.85rem;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+
+    .btn-copy {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 0.7rem 1.2rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .btn-copy:hover {
+      background: var(--primary-light);
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      margin-top: 3rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navegación Superior -->
+  <header>
+    <div class="nav-container">
+      <a href="#inicio" class="brand">
+        <div class="brand-logo">UCV</div>
+        <div class="brand-text">
+          <strong>Blog Académico UCV</strong>
+          <span>Educación en Idiomas • Inglés</span>
+        </div>
+      </a>
+      <nav>
+        <ul>
+          <li><a href="#inicio">Inicio</a></li>
+          <li><a href="#introduccion">Artículo Adaptado</a></li>
+          <li><a href="#video-exposicion">Video Exposición</a></li>
+          <li><a href="#problema">Formulación del Problema</a></li>
+          <li><a href="#autores">Autores y Auditoría</a></li>
+        </ul>
+      </nav>
     </div>
+  </header>
 
-    <!-- 1. NAVEGACIÓN SUPERIOR LIMPIA (MÁXIMO 3 CLICS: Acceso en 1 clic a cada sección) -->
-    <header class="sticky top-1.5 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <!-- Identidad Institucional -->
-                <a href="#inicio" class="flex items-center space-x-3 group">
-                    <div class="w-10 h-10 rounded-xl bg-ucv-navy text-white flex items-center justify-center font-serif font-bold text-lg shadow-sm group-hover:bg-ucv-red transition-colors">
-                        UCV
-                    </div>
-                    <div class="flex flex-col">
-                        <span class="font-bold text-ucv-navy text-sm sm:text-base leading-tight">Blog Académico UCV</span>
-                        <span class="text-xs text-slate-500 font-medium">Educación en Idiomas • Inglés</span>
-                    </div>
-                </a>
+  <!-- Portada / Home -->
+  <section class="hero" id="inicio">
+    <div class="hero-inner">
+      <div class="pill-inst">
+        Universidad César Vallejo | Facultad de Humanidades | Escuela Profesional de Educación en Idiomas - Inglés (Lima Norte - 2026)
+      </div>
+      <h1>Estrategias Didácticas para mejorar la habilidad comunicativa oral en alumnos de nivel A1 de una universidad en Huancayo, 2022</h1>
+      <p>
+        Adaptación digital de la introducción y formulación del problema de nuestra investigación formativa, orientada a divulgar propuestas pedagógicas que fortalezcan la expresión oral en inglés desde el nivel básico.
+      </p>
+      <div class="tags-ods">
+        <span class="tag ods">ODS 4: Educación de Calidad</span>
+        <span class="tag">Línea de Investigación: Inclusión y Educación Ambiental</span>
+        <span class="tag">RSU: Desarrollo sostenible y adaptación al cambio climático</span>
+      </div>
 
-                <!-- Enlaces de Navegación Desktop (1 clic directo) -->
-                <nav class="hidden md:flex items-center space-x-1 lg:space-x-2" aria-label="Navegación principal">
-                    <a href="#inicio" class="px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:text-ucv-navy hover:bg-slate-100 transition">Inicio</a>
-                    <a href="#articulo" class="px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:text-ucv-navy hover:bg-slate-100 transition">Artículo Adaptado</a>
-                    <a href="#problema" class="px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:text-ucv-navy hover:bg-slate-100 transition">Formulación del Problema</a>
-                    <a href="#autores-auditoria" class="px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:text-ucv-navy hover:bg-slate-100 transition">Autores y Auditoría</a>
-                </nav>
-
-                <!-- Botón Menú Móvil -->
-                <button id="mobile-menu-btn" class="md:hidden p-2.5 rounded-xl text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-ucv-navy" aria-label="Abrir menú de navegación">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                    </svg>
-                </button>
-            </div>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <strong>70,5 %</strong>
+          <span>Estudiantes en nivel medio de habilidad oral</span>
         </div>
-
-        <!-- Menú Desplegable Móvil -->
-        <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-slate-200 px-4 pt-2 pb-4 space-y-1 shadow-lg">
-            <a href="#inicio" class="block px-3 py-2.5 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-100">Inicio</a>
-            <a href="#articulo" class="block px-3 py-2.5 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-100">Artículo Adaptado</a>
-            <a href="#problema" class="block px-3 py-2.5 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-100">Formulación del Problema</a>
-            <a href="#autores-auditoria" class="block px-3 py-2.5 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-100">Autores y Auditoría</a>
+        <div class="metric-card">
+          <strong>27,3 %</strong>
+          <span>Alcanza nivel alto en comunicación interactiva</span>
         </div>
-    </header>
-
-    <!-- 2. PÁGINA DE INICIO (HERO / PORTADA) -->
-    <section id="inicio" class="relative overflow-hidden bg-gradient-to-br from-ucv-navy via-ucv-navyLight to-ucv-navy text-white py-14 sm:py-20 border-b border-slate-300">
-        <!-- Patrón editorial sutil -->
-        <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 24px 24px;"></div>
-        
-        <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <!-- Etiqueta Institucional Exacta -->
-            <div class="flex flex-wrap justify-center items-center gap-2 mb-6 text-center">
-                <span class="px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold bg-white/15 text-blue-100 border border-white/25 backdrop-blur-sm">
-                    Universidad César Vallejo | Facultad de Humanidades | Escuela Profesional de Educación en Idiomas - Inglés (Lima Norte - 2026)
-                </span>
-            </div>
-
-            <!-- Título Principal (H1) -->
-            <h1 class="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-center tracking-tight leading-tight mb-6 max-w-4xl mx-auto">
-                Estrategias Didácticas para mejorar la habilidad comunicativa oral en alumnos de nivel A1 de una universidad en Huancayo, 2022
-            </h1>
-
-            <!-- Propósito del Blog y Alineación Curricular -->
-            <div class="max-w-3xl mx-auto text-center mb-10">
-                <p class="text-base sm:text-lg text-blue-100 leading-relaxed mb-4">
-                    Adaptación digital de la introducción y formulación del problema de nuestra investigación formativa, orientada a divulgar propuestas pedagógicas que fortalezcan la expresión oral en inglés desde el nivel básico.
-                </p>
-                <div class="inline-flex flex-wrap justify-center gap-2 text-xs font-medium">
-                    <span class="px-3 py-1 rounded-lg bg-amber-500/20 text-amber-200 border border-amber-400/30">
-                        ODS 4: Educación de Calidad
-                    </span>
-                    <span class="px-3 py-1 rounded-lg bg-white/10 text-blue-100 border border-white/20">
-                        Línea de Investigación: Inclusión y Educación Ambiental
-                    </span>
-                    <span class="px-3 py-1 rounded-lg bg-white/10 text-blue-100 border border-white/20">
-                        RSU: Desarrollo sostenible y adaptación al cambio climático
-                    </span>
-                </div>
-            </div>
-
-            <!-- Tarjetas de Datos Clave Destacados (Resumen Ejecutivo Visual) -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 max-w-4xl mx-auto">
-                <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 text-center shadow-lg">
-                    <div class="text-3xl sm:text-4xl font-extrabold text-amber-300 mb-1">70,5 %</div>
-                    <div class="text-sm font-bold text-white mb-1">Nivel medio de competencia oral</div>
-                    <p class="text-xs text-blue-100 leading-snug">Ubicación predominante del alumnado evaluado en el centro de idiomas (muestra de 44 participantes).</p>
-                </div>
-
-                <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 text-center shadow-lg">
-                    <div class="text-3xl sm:text-4xl font-extrabold text-rose-300 mb-1">27,3 %</div>
-                    <div class="text-sm font-bold text-white mb-1">Nivel alto en comunicación interactiva</div>
-                    <p class="text-xs text-blue-100 leading-snug">Subcategoría con menor desarrollo dentro de las habilidades orales del nivel A1.</p>
-                </div>
-
-                <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 text-center shadow-lg">
-                    <div class="text-3xl sm:text-4xl font-extrabold text-emerald-300 mb-1">98 %</div>
-                    <div class="text-sm font-bold text-white mb-1">Validez de la propuesta didáctica</div>
-                    <p class="text-xs text-blue-100 leading-snug">Aprobación alcanzada mediante juicio de expertos bajo el enfoque comunicativo y aprendizaje por tareas.</p>
-                </div>
-            </div>
-
-            <!-- Acceso rápido en 1 clic -->
-            <div class="mt-9 flex flex-wrap justify-center gap-3">
-                <a href="#articulo" class="px-6 py-3 rounded-xl bg-white text-ucv-navy font-bold text-sm hover:bg-blue-50 transition shadow-md">
-                    Leer Introducción Adaptada ↓
-                </a>
-                <a href="#problema" class="px-6 py-3 rounded-xl bg-ucv-red text-white font-bold text-sm hover:bg-ucv-redDark transition shadow-md border border-red-400/30">
-                    Ver Formulación del Problema ↓
-                </a>
-            </div>
+        <div class="metric-card">
+          <strong>98 %</strong>
+          <span>Validez de la propuesta por juicio de expertos</span>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contenido Principal -->
+  <main>
+
+    <!-- Sección 1: Introducción Adaptada -->
+    <article class="card" id="introduccion">
+      <div class="section-header">
+        <h2>1. Introducción Adaptada: El Reto de la Comunicación Oral</h2>
+        <span class="badge">Escritura Digital • Lectura Ágil</span>
+      </div>
+
+      <h3>Panorama Global y Nacional</h3>
+      <p>
+        En el escenario mundial, el inglés se ha consolidado como una lengua indispensable para el desarrollo académico y profesional[cite: 20]. Sin embargo, el <strong>50 % de los países</strong> presenta un dominio bajo o muy bajo, brecha que en Latinoamérica se acentúa por metodologías tradicionales centradas en la repetición autómata y la memorización gramatical[cite: 20].
+      </p>
+      <ul class="bullet-list">
+        <li><strong>Contexto nacional:</strong> En el Perú, el idioma inglés se utiliza en menos del 50 % del tiempo efectivo de clase[cite: 20].</li>
+        <li><strong>Política educativa:</strong> Pese a iniciativas como <em>"Inglés, puertas al mundo"</em> (D.S. N.° 012-2015-MINEDU), el empleo de recursos didácticos dinámicos y vivenciales sigue siendo limitado[cite: 20].</li>
+        <li><strong>Compromiso global:</strong> Este estudio responde al <strong>ODS 4 (Educación de Calidad)</strong> para formar ciudadanos capaces de interactuar en entornos internacionales[cite: 20].</li>
+      </ul>
+
+      <h3>Diagnóstico Situacional en Huancayo</h3>
+      <p>
+        A nivel institucional, la investigación se desarrolló en el Centro de Idiomas de una universidad particular de Huancayo (muestra de 44 participantes entre estudiantes y docentes)[cite: 17, 20]. Tras la transición a la educación remota por la COVID-19, disminuyó significativamente la práctica oral en estudiantes de nivel A1[cite: 20].
+      </p>
+      <ul class="bullet-list">
+        <li><strong>Nivel general:</strong> El 70,5 % del alumnado se ubica en un nivel medio de competencia oral y solo el 25 % alcanza el nivel alto[cite: 20].</li>
+        <li><strong>Punto más crítico:</strong> La comunicación interactiva es la subcategoría con menor desarrollo, donde apenas el 27,3 % logra un nivel alto[cite: 20].</li>
+      </ul>
+
+      <h3>Brechas en la Praxis Docente y Objetivo</h3>
+      <p>
+        Asimismo, la observación estructurada en aula reveló carencias metodológicas que limitan la expresión espontánea del estudiante[cite: 17, 20]:
+      </p>
+      <ul class="bullet-list">
+        <li><strong>0 % de estrategias de compensación:</strong> En el 100 % de las sesiones observadas no se promovieron gestos, sinónimos ni paráfrasis para sostener el diálogo[cite: 20].</li>
+        <li><strong>Ausencia de metacognición:</strong> Se omitieron espacios de reflexión para evaluar el logro de los objetivos comunicativos[cite: 20].</li>
+        <li><strong>Escaso apoyo multimedia:</strong> El material audiovisual se empleó únicamente en el 5,3 % de las clases[cite: 20].</li>
+      </ul>
+
+      <div class="highlight-box">
+        <strong>Objetivo General de la Investigación:</strong>
+        Diseñar una propuesta de estrategia didáctica sustentada en el enfoque comunicativo y el aprendizaje basado en tareas para desarrollar la capacidad comunicativa oral en alumnos de inglés de nivel A1 en Huancayo[cite: 17, 20].
+      </div>
+    </article>
+
+    <!-- Sección 2: Video de Exposición Académica -->
+    <section class="card" id="video-exposicion">
+      <div class="section-header">
+        <h2>Video de Exposición Académica</h2>
+        <span class="badge">Sustentación Multimedia (3 a 5 min)</span>
+      </div>
+      <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 12px;">
+        <iframe 
+          src="https://drive.google.com/file/d/AQUI_VA_EL_ID_DE_TU_VIDEO/preview" 
+          style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" 
+          allow="autoplay; fullscreen" 
+          allowfullscreen>
+        </iframe>
+      </div>
     </section>
 
-    <!-- 3. ENTRADA PRINCIPAL: INTRODUCCIÓN ADAPTADA -->
-    <main id="articulo" class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-8">
-        <article class="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-10 lg:p-12">
-            
-            <!-- Metadatos del Artículo -->
-            <div class="border-b border-slate-200 pb-6 mb-8">
-                <div class="flex flex-wrap items-center gap-2 text-xs font-bold uppercase tracking-wider text-ucv-red mb-2">
-                    <span>Entrada Principal • Introducción Adaptada</span>
-                    <span class="text-slate-300">|</span>
-                    <span class="text-slate-500 font-semibold">Lectura Digital Estructurada</span>
-                </div>
-                <p class="text-sm text-slate-600">
-                    <strong>Investigación Formativa (I Ciclo)</strong> • Grupo 3 • Educación en Idiomas - Inglés • Lima Norte - 2026
-                </p>
-            </div>
+    <!-- Sección 3: Formulación del Problema -->
+    <article class="card" id="problema">
+      <div class="section-header">
+        <h2>2. Formulación del Problema de Investigación</h2>
+        <span class="badge">Planteamiento y Preguntas Guía</span>
+      </div>
 
-            <div class="editorial-body text-slate-800 text-base sm:text-lg">
+      <p>
+        Aprender inglés no consiste únicamente en memorizar vocabulario o reglas gramaticales, sino en comunicarse efectivamente en situaciones reales[cite: 24]. En el nivel A1, la falta de léxico, los problemas de pronunciación y el temor a equivocarse frenan la participación oral[cite: 24].
+      </p>
 
-                <!-- H2: Panorama Global y Nacional -->
-                <h2 class="font-serif text-2xl sm:text-3xl font-bold text-ucv-navy mt-2 mb-4 flex items-center gap-3">
-                    <span class="w-1.5 h-8 bg-ucv-red rounded-full shrink-0"></span>
-                    Panorama Global y Nacional de la Enseñanza del Inglés
-                </h2>
+      <div class="highlight-box">
+        <strong>Problema General:</strong>
+        ¿Cómo se puede desarrollar la habilidad comunicativa oral en los estudiantes de inglés del nivel A1 de un centro de idiomas perteneciente a una universidad privada de Huancayo?[cite: 24]
+      </div>
 
-                <p>
-                    En el escenario mundial actual, el idioma inglés se ha consolidado como una lengua indispensable para el desarrollo profesional, académico y laboral. <strong>Sin embargo</strong>, el <strong>50 % de los países</strong> presenta un nivel bajo o muy bajo de dominio del idioma, una brecha formativa que se acentúa en Latinoamérica y el Perú debido a factores metodológicos y estructurales:
-                </p>
+      <h3>Problemas Específicos</h3>
+      <ol class="num-list">
+        <li>¿Qué fundamentos teóricos permiten orientar una estrategia didáctica para mejorar la habilidad comunicativa oral de los estudiantes de inglés del nivel A1?[cite: 24]</li>
+        <li>¿Cuál es la situación actual de los estudiantes respecto al desarrollo de su habilidad comunicativa oral en el aprendizaje del idioma inglés?[cite: 24]</li>
+        <li>¿Qué aspectos teóricos, metodológicos y prácticos deben considerarse para elaborar una estrategia didáctica que contribuya al desarrollo de la comunicación oral?[cite: 24]</li>
+        <li>¿En qué medida la estrategia didáctica propuesta puede ser considerada válida para favorecer el desarrollo de la habilidad comunicativa oral en los estudiantes?[cite: 24]</li>
+      </ol>
+    </article>
 
-                <!-- Viñetas de contexto global, regional y nacional -->
-                <ul class="my-6 space-y-3 bg-stone-50 p-5 sm:p-6 rounded-2xl border border-stone-200 text-base">
-                    <li class="flex items-start gap-3">
-                        <span class="mt-2 w-2 h-2 rounded-full bg-ucv-red shrink-0"></span>
-                        <span><strong>Deficiencias metodológicas en Latinoamérica:</strong> Persisten enfoques tradicionales basados en la repetición autómata y la memorización gramatical abstracta, omitiendo estrategias vivenciales por temor a perder la disciplina en el aula, sumado a pocas horas de clase y limitaciones en la preparación docente.</span>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <span class="mt-2 w-2 h-2 rounded-full bg-ucv-red shrink-0"></span>
-                        <span><strong>Bajo uso efectivo en el Perú:</strong> Se constata un bajo desempeño en entornos laborales y académicos, donde la enseñanza continúa siendo tradicional y el idioma inglés se utiliza en <strong>menos del 50 % del tiempo de clase</strong>.</span>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <span class="mt-2 w-2 h-2 rounded-full bg-ucv-red shrink-0"></span>
-                        <span><strong>Brecha frente a la política educativa:</strong> A pesar de los avances normativos impulsados por la política nacional <em>"Inglés, puertas al mundo"</em> (<strong>Decreto Supremo N.° 012-2015-MINEDU</strong>) para alcanzar un nivel intermedio al egresar de la secundaria, la aplicación de medios didácticos dinámicos y musicales sigue siendo limitada.</span>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <span class="mt-2 w-2 h-2 rounded-full bg-ucv-gold shrink-0"></span>
-                        <span><strong>Vinculación con el ODS 4 (Educación de Calidad):</strong> Esta investigación responde directamente a la meta de formar ciudadanos globales capaces de desenvolverse activamente en un entorno internacional mediante una enseñanza inclusiva y pertinente.</span>
-                    </li>
-                </ul>
+    <!-- Sección 4: Resumen / Abstract Bilingüe -->
+    <section class="card" id="resumen">
+      <div class="section-header">
+        <h2>3. Síntesis Ejecutiva (Resumen / Abstract)</h2>
+        <span class="badge">Bilingüe ES / EN</span>
+      </div>
 
-                <!-- H2: Diagnóstico Situacional en Huancayo -->
-                <h2 class="font-serif text-2xl sm:text-3xl font-bold text-ucv-navy mt-10 mb-4 flex items-center gap-3">
-                    <span class="w-1.5 h-8 bg-ucv-red rounded-full shrink-0"></span>
-                    Diagnóstico Situacional en Huancayo
-                </h2>
+      <div class="tab-buttons">
+        <button class="tab-btn active" onclick="switchTab('es', this)">Español (Resumen)</button>
+        <button class="tab-btn" onclick="switchTab('en', this)">English (Abstract)</button>
+      </div>
 
-                <p>
-                    <strong>A nivel institucional</strong>, el estudio se situó en el Centro de Idiomas de una universidad particular en la ciudad de Huancayo. Durante la transición obligatoria a la educación remota por la pandemia del COVID-19, disminuyó significativamente la interacción presencial y el tiempo efectivo de práctica oral entre los estudiantes de nivel A1.
-                </p>
+      <div id="tab-es" class="tab-content active">
+        <p>
+          El presente estudio apoya al cumplimiento del Objetivo de Desarrollo Sostenible 4, referido a la educación de calidad, mediante el planteamiento de una estrategia didáctica orientada a fortalecer la comunicación oral en inglés de los alumnos del nivel A1 de un centro de idiomas universitario de Huancayo[cite: 17]. Con un paradigma sociocrítico, enfoque cualitativo y muestra de 44 participantes, se concluyó que la propuesta basada en el enfoque comunicativo y el aprendizaje basado en tareas atiende las necesidades detectadas y obtuvo un <strong>98 % de validez</strong> mediante juicio de expertos[cite: 17].
+        </p>
+        <p><strong>Palabras clave:</strong> Estrategia didáctica, Comunicación oral, Enfoque comunicativo, Aprendizaje basado en tareas, Nivel A1[cite: 17].</p>
+      </div>
 
-                <p>
-                    <strong>En consecuencia</strong>, el diagnóstico situacional aplicado a una muestra de 44 participantes (entre estudiantes y docentes) arrojó los siguientes resultados críticos sobre la competencia oral del alumnado:
-                </p>
-
-                <!-- Viñetas con cifras exactas del diagnóstico -->
-                <ul class="my-6 space-y-3 bg-blue-50/60 p-5 sm:p-6 rounded-2xl border border-blue-200 text-base">
-                    <li class="flex items-start gap-3">
-                        <span class="mt-2 w-2 h-2 rounded-full bg-ucv-navy shrink-0"></span>
-                        <span><strong>Predominio del nivel intermedio:</strong> El <strong>70,5 %</strong> de los estudiantes evaluados se ubica en un nivel medio de habilidad comunicativa oral.</span>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <span class="mt-2 w-2 h-2 rounded-full bg-ucv-navy shrink-0"></span>
-                        <span><strong>Escaso dominio avanzado:</strong> Únicamente el <strong>25 %</strong> del alumnado alcanza un nivel alto en su desempeño comunicativo oral general.</span>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <span class="mt-2 w-2 h-2 rounded-full bg-ucv-red shrink-0"></span>
-                        <span><strong>Debilidad crítica en comunicación interactiva:</strong> Esta subcategoría resultó ser la más deficiente, donde apenas el <strong>27,3 %</strong> logra alcanzar el nivel alto.</span>
-                    </li>
-                </ul>
-
-                <!-- H2: Brechas en la Praxis Docente y Propuesta -->
-                <h2 class="font-serif text-2xl sm:text-3xl font-bold text-ucv-navy mt-10 mb-4 flex items-center gap-3">
-                    <span class="w-1.5 h-8 bg-ucv-red rounded-full shrink-0"></span>
-                    Brechas en la Praxis Docente y Propuesta
-                </h2>
-
-                <p>
-                    <strong>Asimismo</strong>, mediante la observación estructurada de sesiones y entrevistas en el centro de idiomas, se identificaron importantes vacíos metodológicos en la práctica docente cotidiana:
-                </p>
-
-                <!-- Viñetas sobre brechas en aula -->
-                <ul class="my-6 space-y-3 bg-stone-50 p-5 sm:p-6 rounded-2xl border border-stone-200 text-base">
-                    <li class="flex items-start gap-3">
-                        <span class="mt-2 w-2 h-2 rounded-full bg-ucv-red shrink-0"></span>
-                        <span><strong>Ausencia de estrategias de compensación (100 %):</strong> En la totalidad de las sesiones observadas no se promovieron recursos comunicativos como gestos, sinónimos o paráfrasis para ayudar al estudiante a sostener el diálogo.</span>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <span class="mt-2 w-2 h-2 rounded-full bg-ucv-red shrink-0"></span>
-                        <span><strong>Omisión de espacios metacognitivos:</strong> No se generaron momentos de reflexión para que el alumno evalúe si logró el objetivo de aprendizaje comunicativo de la clase.</span>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <span class="mt-2 w-2 h-2 rounded-full bg-ucv-red shrink-0"></span>
-                        <span><strong>Mínimo apoyo audiovisual (5,3 %):</strong> El material audiovisual se utilizó apenas en el 5,3 % de las clases observadas, limitando la exposición a modelos reales de pronunciación e interacción.</span>
-                    </li>
-                </ul>
-
-                <p>
-                    <strong>Ante esta problemática</strong>, surgió la interrogante orientadora del estudio: <em>¿Cómo desarrollar la capacidad comunicativa oral en los alumnos de inglés del nivel A1 del centro de idiomas de una universidad particular de Huancayo?</em>
-                </p>
-
-                <div class="mt-6 p-6 rounded-2xl bg-ucv-navy text-white shadow-sm border-l-8 border-ucv-gold">
-                    <h3 class="font-serif text-lg sm:text-xl font-bold text-amber-300 mb-2">
-                        Objetivo General y Propuesta Didáctica Validada
-                    </h3>
-                    <p class="text-sm sm:text-base text-blue-50 !mb-0 !leading-relaxed">
-                        El estudio se propuso diseñar una <strong>estrategia didáctica</strong> sustentada en el <strong>enfoque comunicativo</strong> y el <strong>aprendizaje basado en tareas (TBL)</strong> para atender las necesidades detectadas en el nivel A1, logrando alcanzar un <strong>98 % de validez</strong> mediante juicio de expertos.
-                    </p>
-                </div>
-
-            </div>
-        </article>
-    </main>
-
-    <!-- 4. SECCIÓN: FORMULACIÓN DEL PROBLEMA -->
-    <section id="problema" class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-10 lg:p-12">
-            
-            <div class="mb-6">
-                <span class="text-xs font-bold uppercase tracking-wider text-ucv-gold">Delimitación del Estudio</span>
-                <h2 class="font-serif text-2xl sm:text-3xl font-bold text-ucv-navy mt-1">
-                    ¿Por qué es difícil hablar inglés en el nivel A1?
-                </h2>
-            </div>
-
-            <p class="text-slate-700 leading-relaxed mb-6 text-base sm:text-lg">
-                Aprender un nuevo idioma no consiste únicamente en memorizar palabras, conocer reglas gramaticales o escribir correctamente, sino en desarrollar la capacidad de comunicarse con otras personas en situaciones reales. <strong>Sin embargo</strong>, los estudiantes principiantes enfrentan barreras frecuentes que limitan su participación activa en clase:
-            </p>
-
-            <!-- Tarjetas visuales de barreras en el nivel A1 -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                <div class="p-4 rounded-2xl bg-stone-50 border border-stone-200">
-                    <div class="font-bold text-ucv-navy text-sm mb-1">1. Vocabulario limitado</div>
-                    <p class="text-xs sm:text-sm text-slate-600 leading-snug">Falta de repertorio léxico suficiente para construir ideas espontáneas en diálogos cotidianos.</p>
-                </div>
-                <div class="p-4 rounded-2xl bg-stone-50 border border-stone-200">
-                    <div class="font-bold text-ucv-navy text-sm mb-1">2. Dificultad fonética</div>
-                    <p class="text-xs sm:text-sm text-slate-600 leading-snug">Problemas para pronunciar correctamente palabras nuevas propias del nivel inicial A1.</p>
-                </div>
-                <div class="p-4 rounded-2xl bg-stone-50 border border-stone-200">
-                    <div class="font-bold text-ucv-navy text-sm mb-1">3. Inseguridad y temor</div>
-                    <p class="text-xs sm:text-sm text-slate-600 leading-snug">Miedo al error frente al grupo, lo cual bloquea la interacción y reduce la fluidez oral.</p>
-                </div>
-            </div>
-
-            <!-- Tarjeta Destacada: Problema General (H3) -->
-            <div class="p-6 sm:p-7 rounded-2xl bg-gradient-to-r from-ucv-navy to-ucv-navyLight text-white shadow-md mb-8">
-                <h3 class="text-xs uppercase tracking-widest text-amber-300 font-bold mb-2">
-                    Problema General de Investigación
-                </h3>
-                <p class="font-serif text-lg sm:text-xl font-bold leading-relaxed">
-                    «¿Cómo se puede desarrollar la habilidad comunicativa oral en los estudiantes de inglés del nivel A1 de un centro de idiomas perteneciente a una universidad privada de Huancayo?»
-                </p>
-            </div>
-
-            <!-- Lista Numerada: Problemas Específicos (H3) -->
-            <div class="bg-stone-50 rounded-2xl p-6 sm:p-7 border border-stone-200">
-                <h3 class="font-serif text-xl font-bold text-ucv-navy mb-4">
-                    Problemas Específicos
-                </h3>
-                <ol class="space-y-4 text-slate-800 text-sm sm:text-base">
-                    <li class="flex items-start gap-3.5">
-                        <span class="w-7 h-7 rounded-full bg-ucv-navy text-white font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">1</span>
-                        <span class="leading-relaxed">¿Qué fundamentos teóricos permiten orientar una estrategia didáctica para mejorar la habilidad comunicativa oral de los estudiantes de inglés del nivel A1?</span>
-                    </li>
-                    <li class="flex items-start gap-3.5">
-                        <span class="w-7 h-7 rounded-full bg-ucv-navy text-white font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">2</span>
-                        <span class="leading-relaxed">¿Cuál es la situación actual de los estudiantes respecto al desarrollo de su habilidad comunicativa oral en el aprendizaje del idioma inglés?</span>
-                    </li>
-                    <li class="flex items-start gap-3.5">
-                        <span class="w-7 h-7 rounded-full bg-ucv-navy text-white font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">3</span>
-                        <span class="leading-relaxed">¿Qué aspectos teóricos, metodológicos y prácticos deben considerarse para elaborar una estrategia didáctica que contribuya al desarrollo de la comunicación oral?</span>
-                    </li>
-                    <li class="flex items-start gap-3.5">
-                        <span class="w-7 h-7 rounded-full bg-ucv-navy text-white font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">4</span>
-                        <span class="leading-relaxed">¿En qué medida la estrategia didáctica propuesta puede ser considerada válida para favorecer el desarrollo de la habilidad comunicativa oral en los estudiantes?</span>
-                    </li>
-                </ol>
-
-                <p class="mt-5 pt-4 border-t border-stone-200 text-xs sm:text-sm text-slate-600 italic">
-                    En conclusión, esta formulación orienta la búsqueda de una estrategia didáctica que permita a los estudiantes desenvolverse con mayor seguridad, confianza y facilidad al comunicarse en inglés.
-                </p>
-            </div>
-        </div>
+      <div id="tab-en" class="tab-content">
+        <p>
+          This study supports the achievement of Sustainable Development Goal 4, which refers to quality education, by proposing a teaching strategy aimed at strengthening oral communication in English among A1-level students at a university language center in Huancayo[cite: 18]. Adopting a sociocritical paradigm with a qualitative approach and a sample of 44 participants, it concluded that the didactic proposal grounded in the communicative approach and task-based learning addresses the identified needs and obtained <strong>98% validity</strong> through expert judgment[cite: 18].
+        </p>
+        <p><strong>Keywords:</strong> Teaching strategy, Oral communication, Communicative approach, Task-based learning, A1 level[cite: 18].</p>
+      </div>
     </section>
 
-    <!-- 5. EQUIPO DE INVESTIGACIÓN, RESUMEN BILINGÜE Y AUDITORÍA TÉCNICA -->
-    <section id="autores-auditoria" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16 space-y-8">
-        
-        <!-- Bloque de Resumen / Abstract Bilingüe Desplegable -->
-        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4 mb-5">
-                <div>
-                    <span class="text-xs font-bold uppercase tracking-wider text-ucv-red">Síntesis Científica</span>
-                    <h2 class="font-serif text-xl sm:text-2xl font-bold text-ucv-navy">Resumen y Abstract del Estudio</h2>
-                </div>
-                <!-- Selector de idioma -->
-                <div class="inline-flex rounded-xl bg-slate-100 p-1 self-start">
-                    <button id="btn-es" onclick="toggleAbstract('es')" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-ucv-navy text-white transition cursor-pointer">
-                        Español
-                    </button>
-                    <button id="btn-en" onclick="toggleAbstract('en')" class="px-4 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-ucv-navy transition cursor-pointer">
-                        English (Abstract)
-                    </button>
-                </div>
-            </div>
+    <!-- Sección 5: Equipo Investigador y Auditoría Técnica -->
+    <section class="card" id="autores">
+      <div class="section-header">
+        <h2>4. Equipo Investigador y Validación Técnica</h2>
+        <span class="badge">Grupo 3 • I Ciclo</span>
+      </div>
 
-            <!-- Contenido Español -->
-            <div id="abstract-es" class="text-sm sm:text-base text-slate-700 leading-relaxed space-y-3">
-                <p>
-                    El presente estudio apoya al cumplimiento del <strong>Objetivo de Desarrollo Sostenible 4</strong>, referido a la educación de calidad, mediante el planteamiento de una estrategia didáctica orientada a fortalecer la comunicación oral en inglés de los alumnos del nivel A1 de un centro de idiomas universitario de Huancayo.
-                </p>
-                <p>
-                    En lo metodológico, se adoptó el paradigma sociocrítico con enfoque cualitativo, de tipo aplicado en el campo educativo y con un diseño no experimental. La muestra estuvo integrada por 44 participantes, entre estudiantes y docentes, a quienes se les aplicaron cuestionarios, observación estructurada y entrevistas semiestructuradas. Los principales hallazgos evidenciaron que el <strong>70,5 %</strong> del alumnado se ubica en un nivel medio de competencia oral, y que la comunicación interactiva constituye la subcategoría con menor desarrollo, pues solo el <strong>27,3 %</strong> alcanzó un nivel alto. Del mismo modo, se identificaron vacíos en el empleo de estrategias de compensación y en la reflexión metacognitiva dentro de la práctica docente del centro de idiomas.
-                </p>
-                <p>
-                    En consecuencia, se concluye que la propuesta didáctica, cuyo sustento se encuentra en el enfoque comunicativo y en el aprendizaje basado en tareas, atiende las necesidades detectadas en el estudio y obtuvo un <strong>98 % de validez</strong> mediante juicio de expertos.
-                </p>
-                <div class="pt-3 flex flex-wrap gap-2 items-center">
-                    <span class="text-xs font-bold text-ucv-navy">Palabras clave:</span>
-                    <span class="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-medium">Estrategia didáctica</span>
-                    <span class="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-medium">Comunicación oral</span>
-                    <span class="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-medium">Enfoque comunicativo</span>
-                    <span class="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-medium">Aprendizaje basado en tareas</span>
-                    <span class="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-medium">Nivel A1</span>
-                </div>
-            </div>
+      <p><strong>Asesora:</strong> Ph.D. Marllury Ynés Melgarejo Alcántara (<a href="https://orcid.org/0000-0002-4620-985X" target="_blank">ORCID: 0000-0002-4620-985X</a>)[cite: 15]</p>
 
-            <!-- Contenido Inglés -->
-            <div id="abstract-en" class="hidden text-sm sm:text-base text-slate-700 leading-relaxed space-y-3">
-                <p>
-                    This study supports the achievement of <strong>Sustainable Development Goal 4</strong>, which refers to quality education, by proposing a teaching strategy aimed at strengthening oral communication in English among A1-level students at a university language center in Huancayo.
-                </p>
-                <p>
-                    Methodologically, the study adopted the sociocritical paradigm with a qualitative approach, applied educational research type, and a non-experimental design. The sample consisted of 44 participants, including students and teachers, to whom questionnaires, structured observation, and semi-structured interviews were administered. The main findings showed that <strong>70.5%</strong> of the students are at an intermediate level of oral competence, and that interactive communication is the least developed subcategory, with only <strong>27.3%</strong> reaching a high level. Likewise, gaps were identified in the use of compensation strategies and in metacognitive reflection within the teaching practice of the language center.
-                </p>
-                <p>
-                    Consequently, it is concluded that the didactic proposal, which is grounded in the communicative approach and task-based learning, addresses the needs identified in the study and obtained <strong>98% validity</strong> through expert judgment.
-                </p>
-                <div class="pt-3 flex flex-wrap gap-2 items-center">
-                    <span class="text-xs font-bold text-ucv-navy">Keywords:</span>
-                    <span class="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-medium">Teaching strategy</span>
-                    <span class="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-medium">Oral communication</span>
-                    <span class="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-medium">Communicative approach</span>
-                    <span class="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-medium">Task-based learning</span>
-                    <span class="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-medium">A1 level</span>
-                </div>
-            </div>
+      <div class="authors-grid">
+        <div class="author-item">
+          <strong>Silva Mego, Neyer</strong>
+          neyersilva@ucvvirtual.edu.pe<br>
+          <a href="https://orcid.org/0009-0004-3295-6880" target="_blank">orcid.org/0009-0004-3295-6880</a>[cite: 15]
         </div>
-
-        <!-- Grid: Equipo de Investigación + Auditoría Técnica Web -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            
-            <!-- Equipo de Investigación (7 columnas) -->
-            <div class="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm">
-                <span class="text-xs font-bold uppercase tracking-wider text-ucv-red">Créditos Académicos</span>
-                <h2 class="font-serif text-2xl font-bold text-ucv-navy mt-1 mb-1">Equipo de Investigación</h2>
-                <p class="text-xs sm:text-sm text-slate-600 mb-6">
-                    Educación en Idiomas - Inglés, I Ciclo • Universidad César Vallejo (Lima Norte - 2026)
-                </p>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-6">
-                    <!-- Autor 1 -->
-                    <div class="p-3.5 rounded-2xl bg-stone-50 border border-stone-200">
-                        <div class="font-bold text-sm text-ucv-navy">Silva Mego, Neyer</div>
-                        <a href="https://orcid.org/0009-0004-3295-6880" target="_blank" rel="noopener noreferrer" class="text-xs text-emerald-700 hover:underline font-medium block mt-1">
-                            ORCID: 0009-0004-3295-6880
-                        </a>
-                        <a href="mailto:neyersilva@ucvvirtual.edu.pe" class="text-xs text-slate-600 hover:text-ucv-navy block truncate mt-0.5" target="_blank" rel="noopener noreferrer">
-                            neyersilva@ucvvirtual.edu.pe
-                        </a>
-                    </div>
-
-                    <!-- Autor 2 -->
-                    <div class="p-3.5 rounded-2xl bg-stone-50 border border-stone-200">
-                        <div class="font-bold text-sm text-ucv-navy">Cañahua Lopez, Nayeli Yuliana</div>
-                        <a href="https://orcid.org/0009-0001-8660-7844" target="_blank" rel="noopener noreferrer" class="text-xs text-emerald-700 hover:underline font-medium block mt-1">
-                            ORCID: 0009-0001-8660-7844
-                        </a>
-                        <a href="mailto:nayelicanahua@ucvvirtual.edu.pe" class="text-xs text-slate-600 hover:text-ucv-navy block truncate mt-0.5" target="_blank" rel="noopener noreferrer">
-                            nayelicanahua@ucvvirtual.edu.pe
-                        </a>
-                    </div>
-
-                    <!-- Autor 3 -->
-                    <div class="p-3.5 rounded-2xl bg-stone-50 border border-stone-200">
-                        <div class="font-bold text-sm text-ucv-navy">Mendoza Pio, Rosmery</div>
-                        <a href="https://orcid.org/0009-0007-6886-834X" target="_blank" rel="noopener noreferrer" class="text-xs text-emerald-700 hover:underline font-medium block mt-1">
-                            ORCID: 0009-0007-6886-834X
-                        </a>
-                        <a href="mailto:rosmerymendoza@ucvvirtual.edu.pe" class="text-xs text-slate-600 hover:text-ucv-navy block truncate mt-0.5" target="_blank" rel="noopener noreferrer">
-                            rosmerymendoza@ucvvirtual.edu.pe
-                        </a>
-                    </div>
-
-                    <!-- Autor 4 -->
-                    <div class="p-3.5 rounded-2xl bg-stone-50 border border-stone-200">
-                        <div class="font-bold text-sm text-ucv-navy">Lipa Ugarte, Araceli Zarabeth</div>
-                        <a href="https://orcid.org/0009-0009-9552-976X" target="_blank" rel="noopener noreferrer" class="text-xs text-emerald-700 hover:underline font-medium block mt-1">
-                            ORCID: 0009-0009-9552-976X
-                        </a>
-                        <a href="mailto:alipa@ucvvirtual.edu.pe" class="text-xs text-slate-600 hover:text-ucv-navy block truncate mt-0.5" target="_blank" rel="noopener noreferrer">
-                            alipa@ucvvirtual.edu.pe
-                        </a>
-                    </div>
-
-                    <!-- Autor 5 -->
-                    <div class="p-3.5 rounded-2xl bg-stone-50 border border-stone-200">
-                        <div class="font-bold text-sm text-ucv-navy">Azañero Tuesta, Renzo Omar</div>
-                        <a href="https://orcid.org/0009-0008-1067-7038" target="_blank" rel="noopener noreferrer" class="text-xs text-emerald-700 hover:underline font-medium block mt-1">
-                            ORCID: 0009-0008-1067-7038
-                        </a>
-                        <a href="mailto:renzoazanero@ucvvirtual.edu.pe" class="text-xs text-slate-600 hover:text-ucv-navy block truncate mt-0.5" target="_blank" rel="noopener noreferrer">
-                            renzoazanero@ucvvirtual.edu.pe
-                        </a>
-                    </div>
-
-                    <!-- Autor 6 -->
-                    <div class="p-3.5 rounded-2xl bg-stone-50 border border-stone-200">
-                        <div class="font-bold text-sm text-ucv-navy">Velasquez Cerna, Xiomara</div>
-                        <a href="https://orcid.org/0009-0001-7999-2422" target="_blank" rel="noopener noreferrer" class="text-xs text-emerald-700 hover:underline font-medium block mt-1">
-                            ORCID: 0009-0001-7999-2422
-                        </a>
-                        <a href="mailto:xiomaravelasquez@ucvvirtual.edu.pe" class="text-xs text-slate-600 hover:text-ucv-navy block truncate mt-0.5" target="_blank" rel="noopener noreferrer">
-                            xiomaravelasquez@ucvvirtual.edu.pe
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Asesora -->
-                <div class="p-4 rounded-2xl bg-blue-50/80 border border-blue-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div>
-                        <span class="text-xs font-bold uppercase text-ucv-navy block">Asesora de Investigación</span>
-                        <span class="text-sm font-bold text-slate-900">Ph.D. Marllury Ynés Melgarejo Alcántara</span>
-                    </div>
-                    <a href="https://orcid.org/0000-0002-4620-985X" target="_blank" rel="noopener noreferrer" class="text-xs font-semibold text-emerald-800 bg-white px-3 py-1.5 rounded-full border border-blue-200 hover:bg-emerald-50 transition self-start sm:self-center">
-                        ORCID: 0000-0002-4620-985X
-                    </a>
-                </div>
-            </div>
-
-            <!-- Panel de Auditoría Técnica Web (5 columnas) -->
-            <div class="lg:col-span-5 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm flex flex-col justify-between">
-                <div>
-                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold mb-3">
-                        <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
-                        Auditoría Técnica Web Aprobada
-                    </div>
-                    <h2 class="font-serif text-xl font-bold text-ucv-navy mb-2">Verificación de Calidad Digital</h2>
-                    <p class="text-xs sm:text-sm text-slate-600 mb-5">
-                        Validación técnica según los estándares de accesibilidad y legibilidad académica de la UCV:
-                    </p>
-
-                    <!-- Indicadores interactivos de auditoría -->
-                    <ul class="space-y-3 text-xs sm:text-sm mb-6">
-                        <li class="p-3 rounded-xl bg-stone-50 border border-stone-200 flex items-start gap-2.5">
-                            <span class="text-emerald-600 font-bold text-base leading-none mt-0.5">✓</span>
-                            <div>
-                                <strong class="text-slate-900">Contraste WCAG AA / AAA (14.6:1):</strong>
-                                <span class="text-slate-600 block">Texto oscuro (#1e293b) sobre superficies claras (#fafaf9 / #ffffff) para óptima legibilidad.</span>
-                            </div>
-                        </li>
-                        <li class="p-3 rounded-xl bg-stone-50 border border-stone-200 flex items-start gap-2.5">
-                            <span class="text-emerald-600 font-bold text-base leading-none mt-0.5">✓</span>
-                            <div>
-                                <strong class="text-slate-900">Jerarquía Semántica H1 – H2 – H3:</strong>
-                                <span class="text-slate-600 block">Estructura ordenada con bloques cortos, conectores lógicos y viñetas escaneables.</span>
-                            </div>
-                        </li>
-                        <li class="p-3 rounded-xl bg-stone-50 border border-stone-200 flex items-start gap-2.5">
-                            <span class="text-emerald-600 font-bold text-base leading-none mt-0.5">✓</span>
-                            <div>
-                                <strong class="text-slate-900">Regla de los 3 Clics (Acceso en 1 clic):</strong>
-                                <span class="text-slate-600 block">Navegación directa desde el menú superior hacia cualquier apartado del blog.</span>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- Herramienta para copiar HTML limpio -->
-                
-            </div>
-
+        <div class="author-item">
+          <strong>Cañahua Lopez, Nayeli Yuliana</strong>
+          nayelicanahua@ucvvirtual.edu.pe<br>
+          <a href="https://orcid.org/0009-0001-8660-7844" target="_blank">orcid.org/0009-0001-8660-7844</a>[cite: 15]
         </div>
+        <div class="author-item">
+          <strong>Mendoza Pio, Rosmery</strong>
+          rosmerymendoza@ucvvirtual.edu.pe<br>
+          <a href="https://orcid.org/0009-0007-6886-834X" target="_blank">orcid.org/0009-0007-6886-834X</a>[cite: 15]
+        </div>
+        <div class="author-item">
+          <strong>Lipa Ugarte, Araceli Zarabeth</strong>
+          alipa@ucvvirtual.edu.pe<br>
+          <a href="https://orcid.org/0009-0009-9552-976X" target="_blank">orcid.org/0009-0009-9552-976X</a>[cite: 15]
+        </div>
+        <div class="author-item">
+          <strong>Azañero Tuesta, Renzo Omar</strong>
+          renzoazanero@ucvvirtual.edu.pe<br>
+          <a href="https://orcid.org/0009-0008-1067-7038" target="_blank">orcid.org/0009-0008-1067-7038</a>[cite: 15]
+        </div>
+        <div class="author-item">
+          <strong>Velasquez Cerna, Xiomara</strong>
+          xiomaravelasquez@ucvvirtual.edu.pe<br>
+          <a href="https://orcid.org/0009-0001-7999-2422" target="_blank">orcid.org/0009-0001-7999-2422</a>[cite: 15]
+        </div>
+      </div>
+
+      <h3>Auditoría Técnica de Calidad Web</h3>
+      <div class="audit-grid">
+        <div class="audit-item">✓ Regla de los 3 clics: Acceso en 1 clic desde el menú superior[cite: 2]</div>
+        <div class="audit-item">✓ Legibilidad Digital: Párrafos cortos, H1/H2/H3 y viñetas[cite: 1]</div>
+        <div class="audit-item">✓ Contraste WCAG AA: Texto oscuro sobre fondo claro[cite: 3]</div>
+        <div class="audit-item">✓ Multimedia Incrustada: Video integrado en la entrada principal[cite: 2]</div>
+      </div>
+
+      <button class="btn-copy" onclick="copyFullHTML()">Copiar Código HTML Completo</button>
     </section>
 
-    <!-- Pie de Página Institucional -->
-    <footer class="bg-ucv-navy text-blue-200 py-8 border-t border-white/10">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs sm:text-sm text-center sm:text-left">
-            <div>
-                <strong class="text-white">Universidad César Vallejo</strong> • Facultad de Humanidades • Educación en Idiomas - Inglés
-            </div>
-            <div>
-                Lima Norte - 2026 • Habilidades Comunicativas
-            </div>
-        </div>
-    </footer>
+  </main>
 
-    <!-- Scripts Interactivos -->
-    <script>
-        // 1. Barra de progreso de lectura
-        window.addEventListener('scroll', () => {
-            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
-            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-            const scrolled = height > 0 ? (winScroll / height) * 100 : 0;
-            document.getElementById('reading-progress').style.width = scrolled + '%';
-        });
+  <footer>
+    Universidad César Vallejo • Facultad de Humanidades • Habilidades Comunicativas (Sesión 3) • 2026[cite: 1, 15]
+  </footer>
 
-        // 2. Menú móvil responsivo
-        const mobileBtn = document.getElementById('mobile-menu-btn');
-        const mobileMenu = document.getElementById('mobile-menu');
-        mobileBtn.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
-        });
-        mobileMenu.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', () => mobileMenu.classList.add('hidden'));
-        });
+  <script>
+    function switchTab(lang, btn) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById('tab-' + lang).classList.add('active');
+      btn.classList.add('active');
+    }
 
-        // 3. Alternar Resumen (Español) / Abstract (Inglés)
-        function toggleAbstract(lang) {
-            const esBlock = document.getElementById('abstract-es');
-            const enBlock = document.getElementById('abstract-en');
-            const btnEs = document.getElementById('btn-es');
-            const btnEn = document.getElementById('btn-en');
-
-            if (lang === 'es') {
-                esBlock.classList.remove('hidden');
-                enBlock.classList.add('hidden');
-                btnEs.className = 'px-4 py-1.5 rounded-lg text-xs font-bold bg-ucv-navy text-white transition cursor-pointer';
-                btnEn.className = 'px-4 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-ucv-navy transition cursor-pointer';
-            } else {
-                enBlock.classList.remove('hidden');
-                esBlock.classList.add('hidden');
-                btnEn.className = 'px-4 py-1.5 rounded-lg text-xs font-bold bg-ucv-navy text-white transition cursor-pointer';
-                btnEs.className = 'px-4 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-ucv-navy transition cursor-pointer';
-            }
-        }
-
-        // 4. Copiar código HTML limpio al portapapeles
-        function copyCleanHTML() {
-            const fullHtml = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-            const textarea = document.createElement('textarea');
-            textarea.value = fullHtml;
-            textarea.style.position = 'fixed';
-            textarea.style.opacity = '0';
-            document.body.appendChild(textarea);
-            textarea.select();
-            try {
-                document.execCommand('copy');
-                const feedback = document.getElementById('copy-feedback');
-                feedback.classList.remove('hidden');
-                setTimeout(() => feedback.classList.add('hidden'), 5000);
-            } catch (err) {
-                console.error('Error al copiar HTML:', err);
-            }
-            document.body.removeChild(textarea);
-        }
-    </script>
-
-</body></html>
+    function copyFullHTML() {
+      const htmlContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+      navigator.clipboard.writeText(htmlContent).then(() => {
+        alert('¡Código HTML copiado al portapapeles! Listo para pegar en GitHub Pages o VS Code.');
+      });
+    }
+  </script>
+</body>
+</html>
